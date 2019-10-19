@@ -1,0 +1,40 @@
+  * ログインサイトのURL:https://www.sbisec.co.jp/ETGate/?OutSide=on&_ControlID=WPLETsmR001Control&_DataStoreID=DSWPLETsmR001Control&sw_page=Future&cat1=home&cat2=none&getFlg=on
+  * ID入力:/html/body/div[1]/form/table/tbody/tr/td/div[1]/table/tbody/tr/td[1]/table/tbody/tr[2]/td[1]
+  * <div id="user_input"><input type="text" name="user_id" size="15" maxlength="32" style="width:200px;" id="imedisable" class="imeD" onfocus="Monc(&quot;UI&quot;)"></div>
+  *
+  * パスワード入力:/html/body/div[1]/form/table/tbody/tr/td/div[1]/table/tbody/tr/td[1]/table/tbody/tr[2]/td[2]
+  * <div id="password_input"><input type="password" name="user_password" maxlength="32" size="15" style="width:200px;" class="imeD" onfocus="Monc(&quot;PW&quot;)"></div>
+  *
+  * ログインボタン:/html/body/div[1]/form/table/tbody/tr/td/div[1]/table/tbody/tr/td[1]/p[3]
+  * <a onmouseover="revSetOverAction(this);" onmouseout="revSetOutAction(this);">
+  * <input type="image" name="ACT_login" src="https://a248.e.akamai.net/f/248/29350/7d/pict.sbisec.co.jp/sbisec/images/base02/g_head02_b_login.gif" border="0" alt="ログイン" title="ログイン" width="151" height="42" onclick="changeNWEBFLG();">
+  * </a>
+  * 先物サイトURL:https://jderivatives.sbisec.co.jp/gate/index/main.seam?cid=70529
+  /html/frameset/frame[1]
+  * 日経平均://*[@id="index_closeprice_01000000018"]
+  * トップメニュー://*[@id="mainTop"]/frame[1]
+  *   /html/frameset/frame[2]
+  *   口座管理ボタン://*[@id="menu50"]
+  *   建玉一覧ボタン://*[@id="formCM0004:subMenu52"]
+  * メインフレーム://*[@id="mainTop"]/frame[3]
+  *   プライスボード://*[@id="bodyFrame"]/frame[1]
+  *   価格://*[@id="datagrid-row-r5-2-0"]/td[2]/div/div[1]
+  *   出来高://*[@id="datagrid-row-r5-2-0"]/td[3]/div/div[1]
+  *   累積出来高://*[@id="datagrid-row-r5-2-0"]/td[3]/div/div[2]
+  *   新規売りボタン://*[@id="datagrid-row-r5-2-0"]/td[15]/div/button[1]
+  *   新規買いボタン://*[@id="datagrid-row-r5-2-0"]/td[15]/div/button[2]
+  *   決済売りボタン://*[@id="datagrid-row-r5-2-0"]/td[15]/div/button[4]
+  *   決済買いボタン://*[@id="datagrid-row-r5-2-0"]/td[15]/div/button[5]
+  *
+  *   建玉一覧更新ボタン://*[@id="formRF0401:doSearch"]
+  *   建単価://*[@id="formRF0401:SCR_PC_RF_04012_out:0:j_id161"]
+  *   2行目://*[@id="formRF0401:SCR_PC_RF_04012_out:2:j_id161"]
+  *   建数量://*[@id="formRF0401:SCR_PC_RF_04012_out:0:j_id163"]
+  *   2行目://*[@id="formRF0401:SCR_PC_RF_04012_out:2:j_id163"]
+  *   売買区分://*[@id="formRF0401:SCR_PC_RF_04012_out:0:j_id195"]
+  *
+  *   執行条件(新規)://*[@id="formOD0101:conditionId"]
+  *   執行条件(決済)://*[@id="formOD0201:conditionId"]
+  *   数量://*[@id="formOD0101:qtyRcvd"]
+  *   確認画面省略チェックボックス://*[@id="formOD0101:confirmId"]
+  *   注文ボタン://*[@id="formOD0101:orderButtonId"]

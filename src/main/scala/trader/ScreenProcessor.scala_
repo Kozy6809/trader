@@ -1,0 +1,252 @@
+package trader
+
+import java.awt.Robot
+import java.awt.event.{InputEvent, KeyEvent}
+import java.time.LocalTime
+
+import org.sikuli.script.{Match, Region, Screen}
+
+object ScreenProcessor {
+  val scr = new Screen()
+  val robot = new Robot()
+  var time: LocalTime =_
+
+  // 各Regionデータ
+  var buyHolding = List.empty[Region]
+  var buyAll: List[Region] =_
+  var sellHolding =  List.empty[Region]
+  var sellAll: List[Region] =_
+  var codesHolding =  List.empty[Region]
+  var codesAll: List[Region] =_
+  var volumeHolding = List.empty[Region]
+  var currentAll: List[Region] =_
+  var acquiredHolding = List.empty[Region]
+
+
+  var stocks: Array[Stock] =_
+
+  /**
+    * stocksデータを作成する
+    */
+  def initStocks() = {
+    refreshRegions()
+    val codes: List[Int] = region2num(codesAll)
+    val prices: List[Int] = region2num(currentAll)
+    stocks = codes.zip(prices).map(t => new Stock(t._1, t._2)).toArray
+    updateAcquires()
+  }
+
+  /**
+    * 保有銘柄の数量と取得価格を更新する
+    */
+  def updateAcquires() = {
+    val n = sellHolding.size
+    val codes: List[Int] = region2num(codesHolding)
+    val acquirePrices: List[Int] = region2num(acquiredHolding)
+    val volumes: List[Int] = region2num(volumeHolding)
+    for (t: (Int, Int, Int) <- (codes, acquirePrices, volumes).zipped) {
+      for (i <- 0 until stocks.size) {
+        val stock = stocks(i)
+        if (stock.code == t._1) {
+          stock.acquiredPrice = t._2
+          stock.volume = t._3
+        }
+      }
+    }
+  }
+
+  /**
+    * 全銘柄の価格を更新する
+    */
+  def updatePrices() = {
+    val prices: List[Int] = region2num(currentAll)
+    for (p: (Stock, Int) <- (stocks, prices).zipped) {
+      p._1.add(time, p._2)
+    }
+  }
+
+  /**
+    * 画面上の各Regionデータを更新する
+    */
+  def refreshRegions() = {
+    val buys = find("C:/Users/wakui/Documents/buy.png")
+    val sells = find("C:/Users/wakui/Documents/sell.png")
+    val currentHeaders = find("C:/Users/wakui/Documents/currentPrice.png")
+    val currentAllHeight = currentHeaders(1).y
+    var (b1, b2) = buys.partition(_.y < currentAllHeight)
+    buyHolding = b1
+    buyAll = b2
+    var (s1, s2) = sells.partition(_.y < currentAllHeight)
+    sellHolding = s1
+    sellAll = s2
+
+    // 全銘柄のコード、現在値列を取得する
+    val colAll = detectCol(buyAll(0), List(1, 5))
+    codesAll = cols(shrinkCodeRegion(colAll(0)), buyAll.size)
+    currentAll = cols(colAll(1), buyAll.size)
+
+    // 保有銘柄のコード、数量、取得単価を取得する
+    if (buyHolding.size > 0) {
+      val colHolding = detectCol(buyHolding(0), List(1, 3, 4))
+      codesHolding = cols(shrinkCodeRegion(colHolding(0)), buyHolding.size)
+      volumeHolding = cols(colHolding(1), buyHolding.size)
+      acquiredHolding = cols(colHolding(2), buyHolding.size)
+    }
+  }
+
+  /**
+    * 現買Reginの行から垂直罫線を検出し、必要なカラムを表現するRegionを返す
+    */
+  def detectCol(buy: Region, col: List[Int]): List[Region] = {
+    val row = new Region(400, buy.y - 5, 1100, 25)
+    val seps = it2list(row.findAll("C:/Users/wakui/Documents/vsep.png")).sortBy(_.x).toArray
+    var r = List.empty[Region]
+    for (n <- col) {
+      val s = seps(n)
+      println(s.x, s.y, s.w, s.h)
+      val t = seps(n + 1)
+      r = new Region(s.x + 2, s.y,  t.x - s.x - 1, s.h) :: r
+    }
+    r.reverse
+  }
+
+  /**
+    * 銘柄コードのRegionをコード部分のみの幅に縮小する
+    */
+  def shrinkCodeRegion(codeCol: Region): Region = new Region(codeCol.x, codeCol.y, 34, codeCol.h)
+
+  /**
+    * Regionリストから数値テキストを読み取り、数値リストに変換する
+    */
+  def region2num(regions: List[Region]): List[Int] = regions.map(r => trimnum(r.text()))
+
+  /**
+    * 指定された画像にマッチするRegionを検索し、画面の上からの順に並べる
+    */
+  def find(imagePath: String): List[Region] = it2list(scr.findAll(imagePath)).sortBy(_.y)
+
+  /**
+    * ポートフォリオ画面をリロードする。まず画面の何もないところをクリックしてフォーカスを当てる
+    */
+  def reload(): Unit = {
+    time = LocalTime.now()
+    robot.mouseMove(200,200)
+    robot.mousePress(InputEvent.BUTTON1_DOWN_MASK)
+    robot.mouseRelease(InputEvent.BUTTON1_DOWN_MASK)
+    robot.keyPress(KeyEvent.VK_F5)
+    robot.keyRelease(KeyEvent.VK_F5)
+    robot.delay(5000)
+  }
+
+  /**
+    * 売りシーケンス
+    * 現売を右クリック→T→株数入力→TABx3→下矢印→TABx5→パスワード→TABx2→SPACE→TAB→SPACE→CTRL+F4
+    */
+  def sellSequence(r: Region, vol: Int): Unit = {
+    val c = r.getCenter
+    robot.mouseMove(c.x, c.y)
+    robot.mousePress(InputEvent.BUTTON3_DOWN_MASK)
+    robot.mouseRelease(InputEvent.BUTTON3_DOWN_MASK)
+    robot.delay(500)
+    robot.keyPress(KeyEvent.VK_T)
+    robot.keyRelease(KeyEvent.VK_T)
+    robot.delay(5000)
+    inputNumericKey(vol)
+    inputStringKey("\t\t\t")
+    robot.keyPress(KeyEvent.VK_DOWN)
+    robot.keyRelease(KeyEvent.VK_DOWN)
+    inputStringKey("\t\t\t\t\tIZCSXUTS\t\t \t ")
+    robot.delay(1000)
+    robot.keyPress(KeyEvent.VK_CONTROL)
+    robot.keyPress(KeyEvent.VK_F4)
+    robot.keyRelease(KeyEvent.VK_F4)
+    robot.keyRelease(KeyEvent.VK_CONTROL)
+  }
+
+  /**
+    * 文字列をKeyに分解して入力する。ASCII文字オンリー
+    */
+  def inputStringKey(s: String): Unit = {
+    for (k <- s) {
+      robot.keyPress(k)
+      robot.keyRelease(k)
+    }
+  }
+
+  /**
+    * 数値をKeyに分解して入力する
+    */
+  def inputNumericKey(n: Int): Unit = {
+    var digits = List.empty[Int]
+    var remain = n
+    while (remain > 0) {
+      digits = (remain % 10 + 48) :: digits // 48を加えるとASCIIコードになる。これがKeyEventのキーコードに一致する
+      remain = remain / 10
+    }
+    val robot = new Robot()
+    for (k <- digits) {
+      robot.keyPress(k)
+      robot.keyRelease(k)
+    }
+  }
+  /**
+    * 買いシーケンス
+    * 現買を右クリック→T→株数入力→TABx3→下矢印→TABx6→パスワード→TABx2→SPACE→TAB→SPACE→CTRL+F4
+    */
+  def buySequence(r: Region, vol: Int): Unit = {
+    val c = r.getCenter
+    robot.mouseMove(c.x, c.y)
+    robot.mousePress(InputEvent.BUTTON3_DOWN_MASK)
+    robot.mouseRelease(InputEvent.BUTTON3_DOWN_MASK)
+    robot.delay(500)
+    robot.keyPress(KeyEvent.VK_T)
+    robot.keyRelease(KeyEvent.VK_T)
+    robot.delay(5000)
+    inputNumericKey(vol)
+    inputStringKey("\t\t\t")
+    robot.keyPress(KeyEvent.VK_DOWN)
+    robot.keyRelease(KeyEvent.VK_DOWN)
+    inputStringKey("\t\t\t\t\t\tIZCSXUTS\t\t \t ")
+    robot.delay(1000)
+    robot.keyPress(KeyEvent.VK_CONTROL)
+    robot.keyPress(KeyEvent.VK_F4)
+    robot.keyRelease(KeyEvent.VK_F4)
+    robot.keyRelease(KeyEvent.VK_CONTROL)
+  }
+
+  /**
+    * Region::text()で読み込んだ価格データを整形する。空白とカンマ、ピリオドを除去する。エラーの時は0を返す
+    */
+  def trimnum(s: String): Int = {
+    println(s.trim)
+    val trimmed = s.trim.replace(" ", "").replace(",", "").replace(".", "")
+    try {
+      trimmed.toInt
+    } catch {
+      case _: java.lang.NumberFormatException => 0
+    }
+  }
+
+  /**
+    * java.util.IteratorをListに変換する
+    */
+  def it2list(it: java.util.Iterator[Match]): List[Match] = {
+    var r = List.empty[Match]
+    while (it.hasNext) r = it.next :: r
+    r.reverse
+  }
+
+  /**
+    * 与えられたRegionの下に並ぶ同じ大きさのn個のRegionのリストを返す。引数のRegionも含める
+    */
+  def cols(r: Region, n: Int): List[Region] = {
+    var res = List(r)
+    val h = r.h + 1 // findで使用する画像をセルの内側部分にしてあるので、セル高さは枠を含めた+1になる
+    var t: Region = r
+    for (i <- 1 until n) {
+      t = t.below(h)
+      res = t :: res
+    }
+    res.reverse
+  }
+}
