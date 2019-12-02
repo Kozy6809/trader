@@ -15,9 +15,9 @@ import java.util.function.Consumer
   * ロギング
   */
 object Technical {
-  val handler = SBIFutureHandler
+  private val handler = SBIFutureHandler
   val tradeUnit = 1
-  val nightSession = LocalTime.now.compareTo(LocalTime.of(16, 30)) > 0 ||
+  private val nightSession = LocalTime.now.compareTo(LocalTime.of(16, 30)) > 0 ||
     LocalTime.now.compareTo(LocalTime.of(5, 30)) < 0
 
   def isClosing(t: LocalTime = LocalTime.now): Boolean = {
@@ -60,7 +60,7 @@ object Technical {
 
         Thread.sleep(1000) // 間隔が短いとbangされる
       } catch {
-        case e: Exception => {
+        case e: Exception =>
           StockLogger.writeMessage(s"Technical:33 ${e.getMessage} ${e.getClass}")
           var done = false
           while (!done) {
@@ -72,7 +72,6 @@ object Technical {
               case e: Exception => StockLogger.writeMessage(s"Technical:41 ${e.getMessage}")
             }
           }
-        }
       }
       while (isr.ready()) {
         isr.read() match {
@@ -88,16 +87,17 @@ object Technical {
       }
       if (nightSession && LocalTime.now.compareTo(LocalTime.of(5,35)) > 0 &&
         LocalTime.now.compareTo(LocalTime.of(5, 55)) < 0) stopRequest = true
-      if (!nightSession && !daySessionSaved && LocalTime.now.compareTo(LocalTime.of(15, 20)) > 0) {
-        TechAnal.save()
-        daySessionSaved = true
+      if (!nightSession && LocalTime.now.compareTo(LocalTime.of(15, 20)) > 0) {
+//        TechAnal.save()
+//        daySessionSaved = true
+        stopRequest = true
       }
     }
     TechAnal.save()
     handler.close()
   }
 
-  def replay(fileName: String) = {
+  def replay(fileName: String): Unit = {
     val path = Paths.get(fileName)
     TechAnal.replay(path)
     TechAnal.savePeaks()
