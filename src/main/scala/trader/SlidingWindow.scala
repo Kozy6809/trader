@@ -5,16 +5,22 @@ import java.time.LocalDateTime
 class SlidingWindow(val startTime: LocalDateTime, val initialPrice: Double, amt: Int) {
   val limit = 10
   var prices = scala.collection.mutable.Map.empty[Double, Int]
-  prices.put(initialPrice, amt)
+  prices.put(round5(initialPrice), amt)
 
   def max: Double = prices.keys.max
   def min: Double = prices.keys.min
 
+  /**
+    * 価格を日経miniの呼び値(5円)に丸める
+    */
+  private def round5(d: Double) = (d / 5.0).round * 5.0
+
   def add(price: Double, amt: Int): Boolean = {
-    if (price > min + limit || price < max - limit) false
+    val price5 = round5(price)
+    if (price5 > min + limit || price5 < max - limit) false
     else {
-      val prev = prices.getOrElse(price, 0)
-      prices.put(price, prev + amt)
+      val prev = prices.getOrElse(price5, 0)
+      prices.put(price5, prev + amt)
       true
     }
   }
