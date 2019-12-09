@@ -25,11 +25,11 @@ object TechAnal {
   var peakDirection = 0.0 // 現在のピークに対する次のピークの符号
   var peakCandidatePos = 0
   var atPeakDetectedPrice = 0.0 // ピーク検出時点の価格
-  var prevRange = (0.0, 0.0)
-  var currentRange = (0.0, 0.0)
-  var newRange = false
+  private var prevRange = (0.0, 0.0)
+  private var currentRange = (0.0, 0.0)
+  private var newRange = false
 
-  def reset() = {
+  def reset(): Unit = {
     data = List.empty[Price]
     metrics = List.empty[(Double, Double, Double, Double, Double)]
     slides = List.empty[SlidingWindow]
@@ -48,15 +48,15 @@ object TechAnal {
   def add(p: Price): Boolean = {
     if (!replayMode) handleStall()
 
-    val amt = if (data.length <= 1) 1 else (data(0).amt.get - data(1).amt.get).toInt
+    val amt = if (data.length <= 1) 1 else data.head.amt.get - data(1).amt.get
     // 出来高が前回と同じなら記録しない
-    if (data.length > 0 && p.amt.get == data.head.amt.get) false
+    if (data.nonEmpty && p.amt.get == data.head.amt.get) false
     else {
       data = p :: data
 
       calcMetrics()
 
-      if (slides.length == 0) {
+      if (slides.isEmpty) {
         slides = new SlidingWindow(p.time, p.price, amt) :: slides
         slidingMetrics = metrics.head :: slidingMetrics
         currentRange = swRange()
@@ -81,7 +81,7 @@ object TechAnal {
     }
   }
 
-  def calcMetrics() = {
+  private[trader] def calcMetrics() = {
     def ma(period: Long): (Double, Int) = {
       val from = data.head.time.minusSeconds(period)
       val lagged = data.tail
@@ -99,7 +99,7 @@ object TechAnal {
       val p = data.head.price
       (0.0, p, p, p, p)
     } else {
-      val amtrate = (data(0).amt.get - data(1).amt.get) / (data(1).time.until(data(0).time, ChronoUnit.MILLIS) / 1000.0)
+      val amtrate = (data.head.amt.get - data(1).amt.get) / (data(1).time.until(data.head.time, ChronoUnit.MILLIS) / 1000.0)
       val m320 = ma(320)._1
       val m640 = ma(640)._1
       val m1280 = ma(1280)._1
@@ -116,9 +116,9 @@ object TechAnal {
   /**
     * 直近2分間のm320, m1280, m2560の変化率を返す
     */
-  def maRate = {
+  private[trader] def maRate = {
     val t0 = data.head.time.minusSeconds(120)
-    val at = data.filter(p => p.time.compareTo(t0) >= 0).length
+    val at = data.count(p => p.time.compareTo(t0) >= 0)
     val m0 = metrics.head
     if (at > 0) {
       val m1 = metrics(at - 1)
@@ -230,21 +230,22 @@ object TechAnal {
     s.substring(0, s.length - 4)
   }
 
-  def save() = {
+  def save(): Unit = {
     val timeStr = legalTimeStr
     val writer = new PrintWriter("techs" + timeStr)
 
     data.zip(metrics).foreach(d => {
       val d1 = d._1
       val d2 = d._2
-      writer.println(List(d1.time, d1.price, d1.amt.get, d2._1, d2._2, d2._3, d2._4, d2._5).mkString("\t"))
+      writer.println(List(d1.time, d1.price, d1.amt.get, f"${d2._1}%.1f", f"${d2._2}%.1f",
+        f"${d2._3}%.1f", f"${d2._4}%.1f", f"${d2._5}%.1f").mkString("\t"))
     })
     writer.close()
 
     saveSlides("slides" + timeStr)
   }
 
-  def saveSlides(filename: String) = {
+  def saveSlides(filename: String): Unit = {
     val writer = new PrintWriter(filename)
     slides.foreach(s => {
       writer.print(s.startTime + "\t")
@@ -257,7 +258,7 @@ object TechAnal {
   /**
     * ピーク位置を保存。保存する時は時刻の新しい方からの、かつ1から始まるインデックスに変換する
     */
-  def savePeaks() = {
+  def savePeaks(): Unit = {
     val len = metrics.length
     val uw = new PrintWriter("upeaks")
     upeaks.foreach(t => uw.println((len - t._1) + "\t" + (len - t._2)))
@@ -273,19 +274,19 @@ object TechAnal {
     * リロードボタンを押してもなぜか更新されない状態に陥ることが時々ある。エラーも例外も発生しない
     * 対策として、この状態になったらドライバーをクローズしてログインからやりなおす
     */
-  def handleStall() = {
+  def handleStall(): Unit = {
     val now = LocalDateTime.now()
     val prev = now.minusSeconds(60)
 
     // 60秒以上データが止まったらストールとみなす。
     // ただしエラーでログインに時間がかかった場合を考慮し、ログイン時刻の方がデータより新しいならストールとみなさない
-    if (data.length > 0 && data.head.time.compareTo(prev) < 0 && SBIFutureHandler.loginTime.compareTo(data.head.time) < 0) {
+    if (data.nonEmpty && data.head.time.compareTo(prev) < 0 && SBIFutureHandler.loginTime.compareTo(data.head.time) < 0) {
 
       // ただし、15:10-16:30と、05:25-08:45の間はストールとみなさない
       val nowTime = now.toLocalTime
       if ((nowTime.compareTo(LocalTime.of(8, 45)) > 0 && nowTime.compareTo(LocalTime.of(15, 10)) < 0) ||
-        (nowTime.compareTo(LocalTime.of(16, 30))) > 0 ||
-        (nowTime.compareTo(LocalTime.of(5, 25)) < 0)) {
+        nowTime.compareTo(LocalTime.of(16, 30)) > 0 ||
+        nowTime.compareTo(LocalTime.of(5, 25)) < 0) {
         StockLogger.writeMessage("Stall detected. attempt to re-login")
         SBIFutureHandler.close()
         SBIFutureHandler.login()
