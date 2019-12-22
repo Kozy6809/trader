@@ -54,7 +54,7 @@ object Technical {
           val m640 = f"${m._3}%.1f"
           val m1280 = f"${m._4}%.1f"
           val m2560 = f"${m._5}%.1f"
-          println(List(i, p.price, p.amt.get, amtrate, m320, m640, m1280, m2560).mkString("\t"))
+          println(List(i, p.price, p.askPrice, p.amt, amtrate, m320, m640, m1280, m2560).mkString("\t"))
           i += 1
         }
 

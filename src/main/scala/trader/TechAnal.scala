@@ -25,9 +25,9 @@ object TechAnal {
   var peakDirection = 0.0 // 現在のピークに対する次のピークの符号
   var peakCandidatePos = 0
   var atPeakDetectedPrice = 0.0 // ピーク検出時点の価格
-  private var prevRange = (0.0, 0.0)
-  private var currentRange = (0.0, 0.0)
-  private var newRange = false
+  private[trader] var prevRange = (0.0, 0.0)
+  private[trader] var currentRange = (0.0, 0.0)
+  private[trader] var newRange = false
 
   def reset(): Unit = {
     data = List.empty[Price]
@@ -48,9 +48,9 @@ object TechAnal {
   def add(p: Price): Boolean = {
     if (!replayMode) handleStall()
 
-    val amt = if (data.length <= 1) 1 else data.head.amt.get - data(1).amt.get
+    val amt = if (data.length <= 1) 1 else data.head.amt - data(1).amt
     // 出来高が前回と同じなら記録しない
-    if (data.nonEmpty && p.amt.get == data.head.amt.get) false
+    if (data.nonEmpty && p.amt == data.head.amt) false
     else {
       data = p :: data
 
@@ -99,7 +99,7 @@ object TechAnal {
       val p = data.head.price
       (0.0, p, p, p, p)
     } else {
-      val amtrate = (data.head.amt.get - data(1).amt.get) / (data(1).time.until(data.head.time, ChronoUnit.MILLIS) / 1000.0)
+      val amtrate = (data.head.amt - data(1).amt) / (data(1).time.until(data.head.time, ChronoUnit.MILLIS) / 1000.0)
       val m320 = ma(320)._1
       val m640 = ma(640)._1
       val m1280 = ma(1280)._1
@@ -237,8 +237,8 @@ object TechAnal {
     data.zip(metrics).foreach(d => {
       val d1 = d._1
       val d2 = d._2
-      writer.println(List(d1.time, d1.price, d1.amt.get, f"${d2._1}%.1f", f"${d2._2}%.1f",
-        f"${d2._3}%.1f", f"${d2._4}%.1f", f"${d2._5}%.1f").mkString("\t"))
+      writer.println(List(d1.time, d1.price, d1.askPrice, d1.amt,
+        f"${d2._1}%.1f", f"${d2._2}%.1f", f"${d2._3}%.1f", f"${d2._4}%.1f", f"${d2._5}%.1f").mkString("\t"))
     })
     writer.close()
 
@@ -305,7 +305,7 @@ object TechAnal {
     object Proc extends Consumer[String] {
       override def accept(t: String): Unit = {
         val l = t.split("\t")
-        val p = new Price(LocalDateTime.parse(l(0)), l(1).toDouble, Some(l(2).toInt))
+        val p = new Price(LocalDateTime.parse(l(0)), l(1).toDouble, 0.0, l(2).toInt)
         ps += p
       }
     }

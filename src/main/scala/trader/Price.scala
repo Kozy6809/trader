@@ -8,6 +8,7 @@ import java.time.LocalDateTime
 class Price(
   val time: LocalDateTime,
   val price: Double,
-  val amt: Option[Int] // 出来高
+  val askPrice: Double, // 売り気配値
+  val amt: Int // 出来高
 )
 

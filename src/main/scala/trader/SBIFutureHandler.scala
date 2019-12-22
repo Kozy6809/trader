@@ -1,6 +1,6 @@
 package trader
 
-import java.time.{LocalDateTime, LocalTime}
+import java.time.{Duration, LocalDateTime, LocalTime}
 
 import org.openqa.selenium.support.ui.Select
 import org.openqa.selenium.{By, Dimension, WebDriver}
@@ -27,7 +27,7 @@ object SBIFutureHandler {
     * →一度プライスボードボタンをクリックして表示させるようにしたら、その後はデフォルトで表示されるようになった
     * 時々余計な広告ポップアップが出るので、消えるまで待つ必要もある
     */
-  def genDriver() = {
+  def genDriver(): Unit = {
     //val options = new ChromeOptions()
     //options.addArguments("--headless")
     //driver = new ChromeDriver(options)
@@ -44,7 +44,7 @@ object SBIFutureHandler {
 
   }
 
-  def login() = {
+  def login(): Unit = {
     genDriver()
     StockLogger.writeMessage("attempt to login")
     // ログイン画面にアクセス
@@ -55,7 +55,7 @@ object SBIFutureHandler {
     driver.findElement(By.name("user_password")).sendKeys(Settings.pwd)
     // ログインボタンクリック
     val login = driver.findElement(By.name("ACT_login"))
-    val wait = new WebDriverWait(driver, 60)
+    val wait = new WebDriverWait(driver, Duration.ofSeconds(60))
     wait.until(ExpectedConditions.elementToBeClickable(login))
     // ポップアップでクリックボタンが押せない時、ポップアップが消えるのを待つ
     var done = false
@@ -64,10 +64,9 @@ object SBIFutureHandler {
         login.click()
         done = true
       } catch {
-        case e: Exception => {
+        case e: Exception =>
           StockLogger.writeMessage("login failed. retrying click.")
           Thread.sleep(1000)
-        }
       }
     }
     /**
@@ -110,8 +109,8 @@ object SBIFutureHandler {
     StockLogger.writeMessage("new SELL screen displayed")
   }
 
-  def priceBoard() = {
-    val wait = new WebDriverWait(driver, 60)
+  def priceBoard(): Unit = {
+    val wait = new WebDriverWait(driver, Duration.ofSeconds(60))
 
     driver.switchTo().defaultContent()
     val mainFrame = wait.until(ExpectedConditions.frameToBeAvailableAndSwitchToIt("main"))
@@ -125,9 +124,9 @@ object SBIFutureHandler {
     * @param buttonNum 0: 新規売 1: 新規買 3: 決済売 4: 決済買
     * @return
     */
-  def showContentsFrame(buttonNum: Int) = {
+  def showContentsFrame(buttonNum: Int): Unit = {
     priceBoard()
-    val wait = new WebDriverWait(driver, 60)
+    val wait = new WebDriverWait(driver, Duration.ofSeconds(60))
     val firstRow = wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//*[@id='datagrid-row-r7-2-0']")))
     val tradeButtons = firstRow.findElements(By.xpath("td[15]/div/button"))
     tradeButtons.get(buttonNum).click()
@@ -136,9 +135,14 @@ object SBIFutureHandler {
     StockLogger.writeMessage("frame " + buttonNum + " displayed")
   }
 
-  def acquirePrice() = {
-    val wait = new WebDriverWait(driver, 60)
+  /**
+    * 取引画面の板情報から現在値を取得する(プライスボードからではない!)
+    * @return
+    */
+  def acquirePrice(): Price = {
+    val wait = new WebDriverWait(driver, Duration.ofSeconds(60))
     var price = 0.0
+    var askPrice = 0.0
     var amt = 0
     var done = false
     while (!done) {
@@ -147,56 +151,56 @@ object SBIFutureHandler {
         reloadButton.click()
         val priceCell = wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//*[@id='psform']/table/tbody/tr[3]/td[3]/table/tbody/tr[1]/td[2]/b")))
         val amtCell = wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//*[@id='psform']/table/tbody/tr[3]/td[3]/table/tbody/tr[6]/td[2]")))
+        val askPriceCell = wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//*[@id='psform']/table/tbody/tr[3]/td[1]/table/tbody/tr[2]/td[2]/table/tbody/tr[11]/td[2]")))
         price = priceCell.getText.toDouble
+        askPrice = askPriceCell.getText.toDouble
         amt = if (amtCell.getText == "--") 0 else amtCell.getText.toInt
         done = true
       } catch {
-        case e: Exception => {
+        case e: Exception =>
           showContentsFrame(0)
-        }
       }
     }
     // StockLogger.writeMessage(price +" "+ amt)
 
-    new Price(LocalDateTime.now, price, Some(amt))
+    new Price(LocalDateTime.now, price, askPrice, amt)
   }
 
-  def close() = {
+  def close(): Unit = {
     try {
       driver.close()
     } catch { // まさかclose()が例外を投げることがあるとは…
-      case e: Exception => {
+      case e: Exception =>
         StockLogger.writeMessage(e.getMessage)
-      }
     }
   }
 
-  def orderNewSell(amt: Int) = {
-    order(0, amt, true)
+  def orderNewSell(amt: Int): Unit = {
+    order(0, amt, newOrder = true)
     StockLogger.writeMessage("新規売 " + amt)
   }
 
-  def orderNewBuy(amt: Int) = {
-    order(1, amt, true)
+  def orderNewBuy(amt: Int): Unit = {
+    order(1, amt, newOrder = true)
     StockLogger.writeMessage("新規買 " + amt)
   }
 
-  def orderSettleSell(amt: Int) = {
-    order(3, amt, false)
+  def orderSettleSell(amt: Int): Unit = {
+    order(3, amt, newOrder = false)
     StockLogger.writeMessage("決済売 " + amt)
   }
 
-  def orderSettleBuy(amt: Int) = {
-    order(4, amt, false)
+  def orderSettleBuy(amt: Int): Unit = {
+    order(4, amt, newOrder = false)
     StockLogger.writeMessage("決済買 " + amt)
   }
 
-  def order(buttonNum: Int, amt: Int, newOrder: Boolean) = {
+  def order(buttonNum: Int, amt: Int, newOrder: Boolean): Unit = {
     var done = false
     while (!done) {
       try {
         showContentsFrame(buttonNum)
-        val wait = new WebDriverWait(driver, 60)
+        val wait = new WebDriverWait(driver, Duration.ofSeconds(60))
         // 決済時は建玉指定方法で自動指定を選択
         if (!newOrder) {
           val possort = wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//*[@id='formOD0201:positionSortCls2:1']")))
