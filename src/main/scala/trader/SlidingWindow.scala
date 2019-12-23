@@ -3,7 +3,7 @@ package trader
 import java.time.LocalDateTime
 
 class SlidingWindow(val startTime: LocalDateTime, val initialPrice: Double, amt: Int) {
-  val limit = 10
+  val limit = 5
   var prices = scala.collection.mutable.Map.empty[Double, Int]
   prices.put(round5(initialPrice), amt)
 

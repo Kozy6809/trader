@@ -57,12 +57,12 @@ object TechAnal {
       calcMetrics()
 
       if (slides.isEmpty) {
-        slides = new SlidingWindow(p.time, p.price, amt) :: slides
+        slides = new SlidingWindow(p.time, p.askPrice, amt) :: slides
         slidingMetrics = metrics.head :: slidingMetrics
         currentRange = swRange()
         prevRange = currentRange
-      } else if (!slides.head.add(p.price, amt)) {
-        slides = new SlidingWindow(p.time, p.price, amt) :: slides
+      } else if (!slides.head.add(p.askPrice, amt)) {
+        slides = new SlidingWindow(p.time, p.askPrice, amt) :: slides
         slidingMetrics = metrics.head :: slidingMetrics
         prevRange = currentRange
         currentRange = swRange()
