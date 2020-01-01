@@ -297,6 +297,7 @@ object TechAnal {
 
   /**
     * データファイルを読み込み、セッションを再現する。データは先頭の方が新しいので、逆順で処理する
+    * 古いデータを読ませた時は売り気配値が無いことを識別して、売り気配値に0.0をセットする
     */
   def replay(src: Path): Unit = {
     replayMode = true
@@ -305,8 +306,18 @@ object TechAnal {
     object Proc extends Consumer[String] {
       override def accept(t: String): Unit = {
         val l = t.split("\t")
-        val p = new Price(LocalDateTime.parse(l(0)), l(1).toDouble, 0.0, l(2).toInt)
-        ps += p
+        val time = LocalDateTime.parse(l(0))
+        val price = l(1).toDouble
+        var askPrice = 0.0
+        var amt = 0
+        try {
+          amt = l(2).toInt
+        } catch {
+          case e: NumberFormatException =>
+            askPrice = l(2).toDouble
+            amt = l(3).toInt
+        }
+        ps += new Price(time, price, askPrice, amt)
       }
     }
 
