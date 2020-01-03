@@ -91,11 +91,11 @@ object Technical {
 
     def printPrices(p: Price): Unit = {
       val m = TechAnal.metrics.head
-      val amtrate = f"${m._1}%.1f"
-      val m320 = f"${m._2}%.1f"
-      val m640 = f"${m._3}%.1f"
-      val m1280 = f"${m._4}%.1f"
-      val m2560 = f"${m._5}%.1f"
+      val amtrate = f"${m.amtrate}%.1f"
+      val m320 = f"${m.m320}%.1f"
+      val m640 = f"${m.m640}%.1f"
+      val m1280 = f"${m.m1280}%.1f"
+      val m2560 = f"${m.m2560}%.1f"
       println(List(p.price, p.askPrice, p.amt, amtrate, m320, m640, m1280, m2560).mkString("\t"))
     }
 

@@ -1,14 +1,14 @@
 package trader
 
 object TrendDetectStrategy extends Strategy {
-  val ta = TechAnal
-  var lowVolatility = true // SlidingWindowの直近10個の値幅が20円以下の時true
-  var buysell = Judgement.STAY
-  var prevDecision = Judgement.STAY
+  private val ta = TechAnal
+  private var lowVolatility = true // SlidingWindowの直近10個の値幅が20円以下の時true
+  private var buysell = Judgement.STAY
+  private var prevDecision = Judgement.STAY
   var atPeakDetectedPrice = 0.0
   var prevPrice = 0.0
 
-  def reset() = {
+  def reset(): Unit = {
     buysell = Judgement.STAY
     atPeakDetectedPrice = 0.0
     prevPrice = 0.0
@@ -27,21 +27,20 @@ object TrendDetectStrategy extends Strategy {
     else {
       val j = ta.envelopeExtention(p.time)
       buysell match {
-        case Judgement.STAY => {
-          if (!j._1.isNaN && ta.metrics.head._2 > j._1 && Math.abs(p.price - prevPrice) > 10) {
+        case Judgement.STAY =>
+          if (!j._1.isNaN && ta.metrics.head.m320 > j._1 && Math.abs(p.price - prevPrice) > 10) {
             println(p.time + " price " + p.price + " exceeds. Let's buy!")
             decision = Judgement.BUY
             buysell = Judgement.BUY
             prevPrice = p.price
-          } else if (!j._2.isNaN && ta.metrics.head._2 < j._2 && Math.abs(p.price - prevPrice) > 10) {
+          } else if (!j._2.isNaN && ta.metrics.head.m320 < j._2 && Math.abs(p.price - prevPrice) > 10) {
             println(p.time + " price " + p.price + " decline. Do sell!")
             decision = Judgement.SELL
             buysell = Judgement.SELL
             prevPrice = p.price
-          }
         }
-        case Judgement.SELL => {
-          if (!j._1.isNaN && ta.metrics.head._2 > j._1 && Math.abs(p.price - prevPrice) > 10) {
+        case Judgement.SELL =>
+          if (!j._1.isNaN && ta.metrics.head.m320 > j._1 && Math.abs(p.price - prevPrice) > 10) {
             if (!lowVolatility) {
               println(p.time + " price " + p.price + " exceeds. Let's buy!")
               decision = Judgement.BUY
@@ -52,9 +51,8 @@ object TrendDetectStrategy extends Strategy {
             buysell = Judgement.BUY
             prevPrice = p.price
           }
-        }
-        case Judgement.BUY => {
-          if (!j._2.isNaN && ta.metrics.head._2 < j._2 && Math.abs(p.price - prevPrice) > 10) {
+        case Judgement.BUY =>
+          if (!j._2.isNaN && ta.metrics.head.m320 < j._2 && Math.abs(p.price - prevPrice) > 10) {
             if (!lowVolatility) {
               println(p.time + " price " + p.price + " decline. Do sell!")
               decision = Judgement.SELL
@@ -65,11 +63,9 @@ object TrendDetectStrategy extends Strategy {
             buysell = Judgement.SELL
             prevPrice = p.price
           }
-        }
-        case _ => {
+        case _ =>
           println("error: buysell is illegal state")
           decision = Judgement.STAY
-        }
       }
     }
 
@@ -79,6 +75,6 @@ object TrendDetectStrategy extends Strategy {
 
   def checkLowVolatility: Boolean = {
     val v = ta.slides.take(10).map(s => s.min)
-    (v.max - v.min <= 20)
+    v.max - v.min <= 20
   }
 }

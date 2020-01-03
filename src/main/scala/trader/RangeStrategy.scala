@@ -12,21 +12,21 @@ import java.time.LocalTime
   * クロージングでは決済のみを行う
   */
 object RangeStrategy extends Strategy {
-  var prevRange = (0.0, 0.0)
-  var currentRange = (0.0, 0.0)
-  var prevMetrics = (0.0, 0.0, 0.0, 0.0, 0.0)
-  var currentMetrics = (0.0, 0.0, 0.0, 0.0, 0.0)
-  var holding = Judgement.STAY
-  var holdingPrice = 0.0
-  var expandMode = false
-  var boxMode = false
-  var transition = false // モードが切り替わった時だけtrue
-  var madiffer = false // metrics.m1280とm2560の値が異なり始めたらtrue
-  var trend = 0.0
-  var prevTrend = 0.0
-  var prevPrevTrend = 0.0
-  var prevmsg = ""
-  var status = State.RANGECHANGED
+  private var prevRange = (0.0, 0.0)
+  private var currentRange = (0.0, 0.0)
+  private var prevMetrics = (0.0, 0.0, 0.0, 0.0, 0.0)
+  private var currentMetrics = (0.0, 0.0, 0.0, 0.0, 0.0)
+  private var holding = Judgement.STAY
+  private var holdingPrice = 0.0
+  private var expandMode = false
+  private var boxMode = false
+  private var transition = false // モードが切り替わった時だけtrue
+  private var madiffer = false // metrics.m1280とm2560の値が異なり始めたらtrue
+  private var trend = 0.0
+  private var prevTrend = 0.0
+  private var prevPrevTrend = 0.0
+  private var prevmsg = ""
+  private var status = State.RANGECHANGED
 
   object State extends Enumeration {
     val CALM, BOX, RANGEMAYBECHANGING, RANGECHANGED, RANGEESTIMATION, STEADY, STEEP = Value
@@ -35,21 +35,21 @@ object RangeStrategy extends Strategy {
   def isMadiffer: Boolean = {
     if (!madiffer) {
       val m = TechAnal.metrics.head
-      if (m._4 != m._5) madiffer = true
+      if (m.m1280 != m.m2560) madiffer = true
     }
     madiffer
   }
 
   def isBox: Boolean = {
     val m = TechAnal.metrics.head
-    if ((m._2 - m._4).abs >= 12.5 || (m._2 - m._5).abs >= 12.5) {
-      transition = (boxMode == true)
+    if ((m.m320 - m.m1280).abs >= 12.5 || (m.m320 - m.m1280).abs >= 12.5) {
+      transition = boxMode
       boxMode = false
     }
-    if ((m._2 - m._4).abs <= 10.0 && (m._2 - m._5).abs <= 10.0) {
+    if ((m.m320 - m.m1280).abs <= 10.0 && (m.m320 - m.m2560).abs <= 10.0) {
       val rate = TechAnal.maRate
       if (rate._2.abs <= 0.2 && rate._3.abs <= 0.2) {
-        transition = (boxMode == false)
+        transition = !boxMode
         boxMode = true
       }
     }
@@ -66,8 +66,8 @@ object RangeStrategy extends Strategy {
     expandMode
   }
 
-  def isUpeak: Boolean = (TechAnal.upeaks.head._2 == TechAnal.data.length - 1)
-  def isLpeak: Boolean = (TechAnal.lpeaks.head._2 == TechAnal.data.length - 1)
+  def isUpeak: Boolean = TechAnal.upeaks.head._2 == TechAnal.data.length - 1
+  def isLpeak: Boolean = TechAnal.lpeaks.head._2 == TechAnal.data.length - 1
 
   def isSliding(p: Price): Boolean = {
     if (currentRange._2 > prevRange._2 && p.price >= currentRange._2 - 10.0) true
@@ -97,7 +97,7 @@ object RangeStrategy extends Strategy {
     Judgement.SETTLE_BUY
   }
 
-  def newmsg(p: Price, msg: String) = {
+  def newmsg(p: Price, msg: String): Unit = {
     if (msg != prevmsg) {
       StockLogger.bsMessage(s"${p.time.toLocalTime} ${p.price} $msg")
       prevmsg = msg
