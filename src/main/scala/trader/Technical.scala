@@ -141,8 +141,9 @@ object Technical {
   def replay(fileName: String): Unit = {
     val path = Paths.get(fileName)
     TechAnal.replay(path)
-    TechAnal.savePeaks()
-    TechAnal.saveSlides("slides")
+    TechAnal.save()
+//    TechAnal.savePeaks()
+//    TechAnal.saveSlides("slides")
     StockLogger.close()
   }
 

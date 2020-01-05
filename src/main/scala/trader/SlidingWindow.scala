@@ -2,25 +2,29 @@ package trader
 
 import java.time.LocalDateTime
 
-class SlidingWindow(val startTime: LocalDateTime, val initialPrice: Double, amt: Int) {
-  val limit = 5
-  var prices = scala.collection.mutable.Map.empty[Double, Int]
-  prices.put(round5(initialPrice), amt)
+class SlidingWindow(val data: List[Price]) {
+  private val limit = 5
+  private var prices = scala.collection.mutable.Map.empty[Double, Int]
+  prices.put(round5(data.head.askPrice), diffAmt(data))
 
   def max: Double = prices.keys.max
   def min: Double = prices.keys.min
+  private def diffAmt(data: List[Price]): Int = data.head.amt - (if (data.length > 1) data(1).amt else 0)
 
   /**
     * 価格を日経miniの呼び値(5円)に丸める
     */
   private def round5(d: Double) = (d / 5.0).round * 5.0
 
-  def add(price: Double, amt: Int): Boolean = {
-    val price5 = round5(price)
+  /**
+    * 与えられた価格が保持できるならtrueを返す
+    */
+  def add(data: List[Price]): Boolean = {
+    val price5 = round5(data.head.askPrice)
     if (price5 > min + limit || price5 < max - limit) false
     else {
       val prev = prices.getOrElse(price5, 0)
-      prices.put(price5, prev + amt)
+      prices.put(price5, prev + diffAmt(data))
       true
     }
   }
@@ -35,4 +39,21 @@ class SlidingWindow(val startTime: LocalDateTime, val initialPrice: Double, amt:
     r.reverse
   }
 
+}
+
+object SlidingWindow {
+  var slides = List.empty[SlidingWindow]
+
+  /**
+    * 与えられた価格が現在のウィンドウで保持できるならウィンドウに付加してtrueを返す
+    * さもなくば新しいウィンドウを生成してfalseを返す
+    */
+  def add(data: List[Price]): Boolean = {
+    if (slides.isEmpty || !slides.head.add(data)) {
+      slides = new SlidingWindow(data) :: slides
+      false
+    } else true
+  }
+
+  def reset(): Unit = slides = List.empty[SlidingWindow]
 }

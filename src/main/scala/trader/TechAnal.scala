@@ -32,7 +32,7 @@ object TechAnal {
   def reset(): Unit = {
     data = List.empty[Price]
     metrics = List.empty[Metrics]
-    slides = List.empty[SlidingWindow]
+    SlidingWindow.reset()
     replayMode = false
     peaks = List.empty[(Int, Int)] // 直近のピーク位置, ピークをピークと認識した位置。Listの末尾からのインデックスなので要注意
     upeaks = List.empty[(Int, Int)] // 上に凸なピーク
@@ -54,29 +54,8 @@ object TechAnal {
     else {
       data = p :: data
       metrics = new Metrics(data) :: metrics
-
-
-      if (slides.isEmpty) {
-        slides = new SlidingWindow(p.time, p.askPrice, amt) :: slides
-        slidingMetrics = metrics.head :: slidingMetrics
-        currentRange = swRange()
-        prevRange = currentRange
-      } else if (!slides.head.add(p.askPrice, amt)) {
-        slides = new SlidingWindow(p.time, p.askPrice, amt) :: slides
-        slidingMetrics = metrics.head :: slidingMetrics
-        prevRange = currentRange
-        currentRange = swRange()
-        newRange = true
-      }
-
-      if (detectPeak()) {
-        if (peakDirection > 0) upeaks = peaks.head :: upeaks
-        else lpeaks = peaks.head :: lpeaks
-        atPeakDetectedPrice = p.price
-      }
-
+      SlidingWindow.add(data)
       StrategyEvaluator.add(p)
-
       true
     }
   }
@@ -198,8 +177,7 @@ object TechAnal {
     s.substring(0, s.length - 4)
   }
 
-  def save(): Unit = {
-    val timeStr = legalTimeStr
+  def save(timeStr: String = legalTimeStr): Unit = {
     val writer = new PrintWriter("techs" + timeStr)
 
     data.zip(metrics).foreach(d => {
@@ -215,9 +193,10 @@ object TechAnal {
 
   def saveSlides(filename: String): Unit = {
     val writer = new PrintWriter(filename)
-    slides.foreach(s => {
-      writer.print(s.startTime + "\t")
-      writer.print(s.initialPrice + "\t")
+    SlidingWindow.slides.foreach(s => {
+      val p = s.data.head
+      writer.print(p.time + "\t")
+      writer.print(p.askPrice + "\t")
       writer.println(s.result.mkString("\t"))
     })
     writer.close()
