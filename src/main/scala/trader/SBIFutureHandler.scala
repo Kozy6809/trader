@@ -69,38 +69,28 @@ object SBIFutureHandler {
           Thread.sleep(1000)
       }
     }
-    /**
-      * "重要なお知らせ"がポストされると、それを読まないと取引画面が表示されない。しかも文書はポップアップで表示されるので、ウィンドウ遷移処理が必要
-      * これが発生するのはログイン時だけではなく、取引画面のリロードを繰り返している最中にも生じる
-      * "重要なお知らせ"のxpath:
-      * /html/body/div[1]/table/tbody/tr/td[1]/table/tbody/tr[2]/td[2]/table/tbody/tr[3]/td/div/b
-      * 最新メッセージのxpath:
-      * /html/body/div[1]/table/tbody/tr/td[1]/table/tbody/tr[2]/td[2]/form/table[3]/tbody/tr/td/table/tbody/tr[2]/td[2]/table/tbody/tr[2]/td/a
-      * 遷移後のウィンドウで、内容を理解した旨のボタンのxpath:
-      * /html/body/div[1]/table[3]/tbody/tr[1]/td[2]/form/table[4]/tbody/tr/td/input[1]
-      * xpathよりもname="ACT_estimate"を使う方が簡単
-      * 同意ボタンをクリックすると文書の再読み込みが発生する
-      * 遷移後のウィンドウを閉じるボタンのxpath:
-      * /html/body/div[1]/table[3]/tbody/tr[1]/td[2]/form/table[6]/tbody/tr[4]/td/input
-      * これもname="ACT_backViewInfoList"の方が楽
-      * 閉じるボタンをクリックしても閉じない?要素を調査中だったから?
-      * 元画面に戻っても重要なお知らせのままなので、ログインからやり直そうとすると、既にログイン済みなので取引画面が表示される
-      */
-    val element = wait.until(ExpectedConditions.visibilityOfElementLocated(By.name("main")))
+
+    try {
+      wait.until(ExpectedConditions.visibilityOfElementLocated(By.name("main")))
+    } catch {
+      case e: Exception =>
+        StockLogger.writeMessage("メイン画面が表示されません。重要なお知らせをチェックします")
+        try {
+          clearAcknowledge()
+          wait.until(ExpectedConditions.visibilityOfElementLocated(By.name("main")))
+        } catch {
+          case e: Exception =>
+            StockLogger.writeMessage("想定外のエラーです")
+            // 建玉が残っていればここで決済したいところだが、その術がない。携帯にアラートを送付するか
+            close()
+            System.exit(1)
+        }
+    }
     println(driver.getTitle)
 
     StockLogger.writeMessage("login done")
     loginTime = LocalDateTime.now()
 
-    // プライスボードボタンをクリック
-//    wait.until(ExpectedConditions.frameToBeAvailableAndSwitchToIt("menu"))
-//    wait.until(ExpectedConditions.frameToBeAvailableAndSwitchToIt("menubody"))
-//    wait.until(ExpectedConditions.elementToBeClickable(By.id("formCM0004:priceLink"))).click()
-    // /html/frameset/frame[1] name=menu
-    // /html/frameset/frame[2] name=menubody
-    // //*[@id="formCM0004:priceLink"]
-//    val action = new Actions(driver)
-//    action.moveByOffset(100, 130).clickAndHold().moveByOffset(0, 250).release().perform()
     priceBoard()
     StockLogger.writeMessage("price board displayed")
 
@@ -117,6 +107,48 @@ object SBIFutureHandler {
     val priceFrame = wait.until(ExpectedConditions.frameToBeAvailableAndSwitchToIt("price"))
     val firstRow = wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//*[@id='datagrid-row-r7-2-0']")))
 
+  }
+
+  /**
+    * 重要なお知らせ画面が表示されていたら、すべての項目に同意する
+    * 重要なお知らせ画面でなければ例外を投げる
+    */
+  def clearAcknowledge(): Unit = {
+    val wait = new WebDriverWait(driver, Duration.ofSeconds(60))
+    try {
+      val noticemsg = wait.until(ExpectedConditions.visibilityOfElementLocated(
+        By.xpath("/html/body/div[1]/table/tbody/tr/td[1]/table/tbody/tr[2]/td[2]/table/tbody/tr[3]/td/div/b")))
+      StockLogger.writeMessage("重要なお知らせ: " + noticemsg.getText)
+    } catch {
+      case e: Exception =>
+        StockLogger.writeMessage("重要なお知らせ画面以外のエラーです")
+        throw e
+    }
+    // 同時に複数のメッセージがポストされたら以下の処理をリピートしなければならないが、これまでそのようなケースは起きていない
+    try {
+      // 最新メッセージの表示
+      val msglnk = wait.until(ExpectedConditions.visibilityOfElementLocated(
+        By.xpath("/html/body/div[1]/table/tbody/tr/td[1]/table/tbody/tr[2]/td[2]/form/table[4]/tbody/tr/td/table/tbody/tr[2]/td[2]/table/tbody/tr[2]/td/a")))
+      StockLogger.writeMessage("重要なお知らせを表示します: " + msglnk.getText)
+      msglnk.click()
+      val agreebtn = wait.until(ExpectedConditions.visibilityOfElementLocated(
+        By.xpath("/html/body/div[1]/table/tbody/tr/td[1]/table/tbody/tr/td[2]/form/table[4]/tbody/tr/td/input[1]")))
+      StockLogger.writeMessage("重要なお知らせに同意します")
+      agreebtn.click()
+      val backbtn = wait.until(ExpectedConditions.visibilityOfElementLocated(
+        By.xpath("/html/body/div/table/tbody/tr/td[1]/table/tbody/tr/td[2]/form/table[7]/tbody/tr[4]/td/input[1]")))
+      StockLogger.writeMessage("重要なお知らせ一覧に戻ります")
+      backbtn.click()
+    } catch {
+      case e: Exception =>
+        StockLogger.writeMessage("重要なお知らせを処理できませんでした")
+        throw e
+    }
+    val nomsg = wait.until(ExpectedConditions.visibilityOfElementLocated(
+      By.xpath("/html/body/div[1]/table/tbody/tr/td[1]/table/tbody/tr[2]/td[2]/form/table[3]/tbody/tr/td/table/tbody/tr[2]/td/div/b")))
+    StockLogger.writeMessage("重要なお知らせはもうありません: " + nomsg.getText)
+    // ログイン画面にアクセスする。すでにログイン済みなので、これによってメイン画面が表示される
+    driver.get("https://www.sbisec.co.jp/ETGate/?OutSide=on&_ControlID=WPLETsmR001Control&_DataStoreID=DSWPLETsmR001Control&sw_page=Future&cat1=home&cat2=none&getFlg=on")
   }
 
   /**
@@ -137,6 +169,7 @@ object SBIFutureHandler {
 
   /**
     * 取引画面の板情報から現在値を取得する(プライスボードからではない!)
+    *
     * @return
     */
   def acquirePrice(): Price = {
