@@ -60,7 +60,7 @@ object Technical {
     }
 
     val stdinr = new InputStreamReader(System.in)
-
+    PriceWindow.init()
     // 時刻が5:25から8:46の間は8:46までスリープ
     Thread.sleep(remainSecInDuration(5, 25, 8, 46) )
     // 時刻が15:10から16:31の間は16:31までスリープ
@@ -87,6 +87,7 @@ object Technical {
     }
     TechAnal.save()
     handler.close()
+    System.exit(0)
 
 
     def printPrices(p: Price): Unit = {
@@ -99,6 +100,15 @@ object Technical {
       println(List(p.price, p.askPrice, p.amt, amtrate, m320, m640, m1280, m2560).mkString("\t"))
     }
 
+    def showPrices() :Unit = {
+      val p = TechAnal.data.head
+      val prev = if (TechAnal.data.size > 1) TechAnal.data(1) else p
+      val m = TechAnal.metrics.head
+      val diffma = TechAnal.maDiff()
+      PriceWindow.setData(p.askPrice, prev.askPrice, m.m320, m.m640, m.m1280, m.m2560,
+        diffma._1, diffma._2, diffma._3, diffma._4, m.amtrate)
+      PriceWindow.repaint()
+    }
     def retryLogin(): Unit = {
       var done = false
       while (!done) {
@@ -130,7 +140,10 @@ object Technical {
     def trading(): Unit = {
       try {
         val p = handler.acquirePrice()
-        if (TechAnal.add(p)) printPrices(p)
+        if (TechAnal.add(p)) {
+          printPrices(p)
+          showPrices()
+        }
         Thread.sleep(1000) // 間隔が短いとbangされる
       } catch {
         case e: Exception => retryLogin()

@@ -62,6 +62,7 @@ object TechAnal {
 
   /**
     * 直近2分間のm320, m1280, m2560の変化率を返す
+   * @deprecated
     */
   private[trader] def maRate = {
     val t0 = data.head.time.minusSeconds(120)
@@ -72,6 +73,19 @@ object TechAnal {
       (m0.m320 - m1.m320, m0.m1280 - m1.m1280, m0.m2560 - m1.m2560)
     } else (0.0, 0.0, 0.0)
   }
+
+  /**
+   * 直近n項目の移動平均の変化率を返す
+   */
+  private[trader] def maDiff(n: Int = 20): (Double, Double, Double, Double) = {
+    if (metrics.length < n) (0.0, 0.0, 0.0, 0.0)
+    else {
+      val m0 = metrics.head
+      val m1 = metrics(n - 1)
+      (m0.m320 - m1.m320, m0.m640 - m1.m640, m0.m1280 - m1.m1280, m0.m2560 - m1.m2560)
+    }
+  }
+
   /**
     * ピークを検出する。前回ピークよりgap以上離れているピークを検出感度sensで検出する
     * ピークを認識したらtrueを返す
