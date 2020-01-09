@@ -11,6 +11,7 @@ object PriceWindow extends JFrame {
   private val scaleFactor = 2.0 // pixel / yen
   // 基本的に価格の縦位置は固定だが、価格が変化した時だけ位置を変え、徐々に元の位置に戻すようにする
   private var yPriceOffset = 0 // 価格縦位置のオフセット
+  private var yoffset = 0
   private var ym320 = hcenter
   private var ym640 = hcenter
   private var ym1280 = hcenter
@@ -72,7 +73,7 @@ object PriceWindow extends JFrame {
     def range(l: List[Int]): (Int, Int) = (l.min, l.max)
 
     val r = range(List(ym320, ym640, ym1280, ym2560))
-    val yoffset = if (r._1 < 0) yPriceOffset - r._1 else if (r._2 > h)
+    yoffset = if (r._1 < 0) yPriceOffset - r._1 else if (r._2 > h)
       yPriceOffset - (r._2 - h) else
       yPriceOffset
   }
@@ -82,21 +83,21 @@ object PriceWindow extends JFrame {
     override def paint(g: Graphics): Unit = {
       super.paint(g)
       g.setColor(java.awt.Color.black)
-      g.drawLine(10, hcenter + yPriceOffset, 50, ym320 + yPriceOffset)
-      g.drawLine(50, ym320 + yPriceOffset, 90, ym640 + yPriceOffset)
-      g.drawLine(90, ym640 + yPriceOffset, 130, ym1280 + yPriceOffset)
-      g.drawLine(130, ym1280 + yPriceOffset, 170, ym2560 + yPriceOffset)
+      g.drawLine(10, hcenter + yoffset, 50, ym320 + yoffset)
+      g.drawLine(50, ym320 + yoffset, 90, ym640 + yoffset)
+      g.drawLine(90, ym640 + yoffset, 130, ym1280 + yoffset)
+      g.drawLine(130, ym1280 + yoffset, 170, ym2560 + yoffset)
 
-      g.drawLine(50, ym320 + yPriceOffset, 50, ym320 + yPriceOffset - ydiffm320)
-      g.drawLine(90, ym640 + yPriceOffset, 90, ym640 + yPriceOffset - ydiffm640)
-      g.drawLine(130, ym1280 + yPriceOffset, 130, ym1280 + yPriceOffset - ydiffm1280)
-      g.drawLine(170, ym2560 + yPriceOffset, 170, ym2560 + yPriceOffset - ydiffm2560)
+      g.drawLine(50, ym320 + yoffset, 50, ym320 + yoffset - ydiffm320)
+      g.drawLine(90, ym640 + yoffset, 90, ym640 + yoffset - ydiffm640)
+      g.drawLine(130, ym1280 + yoffset, 130, ym1280 + yoffset - ydiffm1280)
+      g.drawLine(170, ym2560 + yoffset, 170, ym2560 + yoffset - ydiffm2560)
 
-      g.drawString(strprice, 5, hcenter + yPriceOffset)
-      g.drawString(strm320, 45, ym320 + yPriceOffset)
-      g.drawString(strm640, 85, ym640 + yPriceOffset)
-      g.drawString(strm1280, 125, ym1280 + yPriceOffset)
-      g.drawString(strm2560, 165, ym2560 + yPriceOffset)
+      g.drawString(strprice, 5, hcenter + yoffset)
+      g.drawString(strm320, 45, ym320 + yoffset)
+      g.drawString(strm640, 85, ym640 + yoffset)
+      g.drawString(strm1280, 125, ym1280 + yoffset)
+      g.drawString(strm2560, 165, ym2560 + yoffset)
       g.drawString(stramtrate, 210, hcenter)
       g.drawString(strdiffamt, 210, hcenter + 10)
     }
