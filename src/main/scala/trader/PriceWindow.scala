@@ -11,10 +11,10 @@ object PriceWindow extends JFrame {
   private val scaleFactor = 2.0 // pixel / yen
   // 基本的に価格の縦位置は固定だが、価格が変化した時だけ位置を変え、徐々に元の位置に戻すようにする
   private var yPriceOffset = 0 // 価格縦位置のオフセット
-  private var ym320 = 0
-  private var ym640 = 0
-  private var ym1280 = 0
-  private var ym2560 = 0
+  private var ym320 = hcenter
+  private var ym640 = hcenter
+  private var ym1280 = hcenter
+  private var ym2560 = hcenter
   private var ydiffm320 = 0
   private var ydiffm640 = 0
   private var ydiffm1280 = 0
@@ -24,7 +24,8 @@ object PriceWindow extends JFrame {
   private var strm640 = ""
   private var strm1280 = ""
   private var strm2560 = ""
-  private var stramtrate = ""
+  private var stramtrate = "0"
+  private var strdiffamt = "0"
 
   def init(): Unit = {
     val p = PricePanel
@@ -34,8 +35,10 @@ object PriceWindow extends JFrame {
     setVisible(true)
   }
 
-  def setData(price: Double, prevPrice: Double, m320: Double, m640: Double, m1280: Double, m2560: Double,
-              diffm320: Double, diffm640: Double, diffm1280: Double, diffm2560: Double, amtrate: Double): Unit = {
+  def setData(price: Double, prevPrice: Double,
+              m320: Double, m640: Double, m1280: Double, m2560: Double,
+              diffm320: Double, diffm640: Double, diffm1280: Double, diffm2560: Double,
+              amtrate: Double, diffamt: Int): Unit = {
     val yPrice = (price * scaleFactor).round.toInt
 
     def toYpos(d: Double): Int = hcenter - ((d * scaleFactor).round.toInt - yPrice)
@@ -60,6 +63,7 @@ object PriceWindow extends JFrame {
     strm1280 = d2s(m1280)
     strm2560 = d2s(m2560)
     stramtrate = d2s(amtrate)
+    strdiffamt = diffamt.toString
     yPriceOffset = {
       val o = yPriceOffset * 0.8 - (price - prevPrice) * scaleFactor
       (o.abs.floor * Math.signum(o)).toInt
@@ -94,6 +98,7 @@ object PriceWindow extends JFrame {
       g.drawString(strm1280, 125, ym1280 + yPriceOffset)
       g.drawString(strm2560, 165, ym2560 + yPriceOffset)
       g.drawString(stramtrate, 210, hcenter)
+      g.drawString(strdiffamt, 210, hcenter + 10)
     }
   }
 }

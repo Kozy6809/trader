@@ -86,6 +86,11 @@ object TechAnal {
     }
   }
 
+  private[trader] def amtDiff(d: List[Price] = data, n: Int = 20): Int = {
+    if (d.length < n) d.head.amt - d.last.amt
+    else d.head.amt - d(n - 1).amt
+  }
+
   /**
     * ピークを検出する。前回ピークよりgap以上離れているピークを検出感度sensで検出する
     * ピークを認識したらtrueを返す

@@ -150,8 +150,9 @@ object Technical {
     val prev = if (data.size > 1) data(1) else p
     val m = metrics.head
     val diffma = TechAnal.maDiff(m = metrics)
+    val diffamt = TechAnal.amtDiff(d = data)
     PriceWindow.setData(p.askPrice, prev.askPrice, m.m320, m.m640, m.m1280, m.m2560,
-      diffma._1, diffma._2, diffma._3, diffma._4, m.amtrate)
+      diffma._1, diffma._2, diffma._3, diffma._4, m.amtrate, diffamt)
     PriceWindow.repaint()
   }
 
