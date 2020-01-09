@@ -77,11 +77,11 @@ object TechAnal {
   /**
    * 直近n項目の移動平均の変化率を返す
    */
-  private[trader] def maDiff(n: Int = 20): (Double, Double, Double, Double) = {
-    if (metrics.length < n) (0.0, 0.0, 0.0, 0.0)
+  private[trader] def maDiff(m: List[Metrics] = metrics, n: Int = 20): (Double, Double, Double, Double) = {
+    if (m.length < n) (0.0, 0.0, 0.0, 0.0)
     else {
-      val m0 = metrics.head
-      val m1 = metrics(n - 1)
+      val m0 = m.head
+      val m1 = m(n - 1)
       (m0.m320 - m1.m320, m0.m640 - m1.m640, m0.m1280 - m1.m1280, m0.m2560 - m1.m2560)
     }
   }

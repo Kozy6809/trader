@@ -8,7 +8,7 @@ object PriceWindow extends JFrame {
   private val w = 256
   private val h = 512
   private val hcenter = h / 2
-  private val scaleFactor = 5.0 // pixel / yen
+  private val scaleFactor = 2.0 // pixel / yen
   // 基本的に価格の縦位置は固定だが、価格が変化した時だけ位置を変え、徐々に元の位置に戻すようにする
   private var yPriceOffset = 0 // 価格縦位置のオフセット
   private var ym320 = 0
@@ -45,7 +45,7 @@ object PriceWindow extends JFrame {
     ym1280 = toYpos(m1280)
     ym2560 = toYpos(m2560)
 
-    def diff2Ylen(d: Double): Int = (d * 2.5 * scaleFactor).round.toInt
+    def diff2Ylen(d: Double): Int = (d * 5 * scaleFactor).round.toInt
 
     ydiffm320 = diff2Ylen(diffm320)
     ydiffm640 = diff2Ylen(diffm640)

@@ -6,6 +6,8 @@ import java.time.LocalTime
 import java.time.temporal.ChronoUnit
 import java.util.function.Consumer
 
+import scala.annotation.tailrec
+
 /**
   * 値動きを追跡して適切なアクションを実行する
   * 価格情報ストリームと建玉情報に基づき、売買アクションを起こす
@@ -143,23 +145,43 @@ object Technical {
     }
   }
 
-  def showPrices() :Unit = {
-    val p = TechAnal.data.head
-    val prev = if (TechAnal.data.size > 1) TechAnal.data(1) else p
-    val m = TechAnal.metrics.head
-    val diffma = TechAnal.maDiff()
+  def showPrices(data: List[Price] = TechAnal.data, metrics: List[Metrics] = TechAnal.metrics) :Unit = {
+    val p = data.head
+    val prev = if (data.size > 1) data(1) else p
+    val m = metrics.head
+    val diffma = TechAnal.maDiff(m = metrics)
     PriceWindow.setData(p.askPrice, prev.askPrice, m.m320, m.m640, m.m1280, m.m2560,
       diffma._1, diffma._2, diffma._3, diffma._4, m.amtrate)
     PriceWindow.repaint()
+  }
+
+  def replayShowPrices(): Unit = {
+    PriceWindow.init()
+    var metricses =  List.empty[List[Metrics]]
+    val m = TechAnal.metrics
+    @tailrec
+    def mkMetricses(m: List[Metrics]): Unit = {
+      m match {
+        case List() =>
+        case x :: xs => metricses = m :: metricses; mkMetricses(xs)
+      }
+    }
+    mkMetricses(m)
+    metricses.foreach(m => {
+      showPrices(m.head.data, m)
+        Thread.sleep(100)
+    })
   }
 
   def replay(fileName: String): Unit = {
     val path = Paths.get(fileName)
     TechAnal.replay(path)
     TechAnal.save()
+    replayShowPrices()
 //    TechAnal.savePeaks()
 //    TechAnal.saveSlides("slides")
     StockLogger.close()
+    System.exit(0)
   }
 
   def replayAll(folderName: String): Unit = {
@@ -176,5 +198,6 @@ object Technical {
     val path = Paths.get(folderName)
     Files.newDirectoryStream(path, "techs*").forEach(Proc)
     StockLogger.close()
+    System.exit(0)
   }
 }
