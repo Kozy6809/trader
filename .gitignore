@@ -3,3 +3,5 @@
 /target/
 /target/scala-2.12/classes/
 ScreenProcessor.scala_
+techs*
+slides*
