@@ -63,11 +63,14 @@ object Technical {
 
     val stdinr = new InputStreamReader(System.in)
     PriceWindow.init()
-    // 時刻が5:25から8:45の間は8:45までスリープ
-    Thread.sleep(remainSecInDuration(5, 25, 8, 45))
-    // 時刻が15:10から16:30の間は16:30までスリープ
-    Thread.sleep(remainSecInDuration(15, 10, 16, 30))
-    Thread.sleep(15000L)
+    def waitForMarket(): Unit = {
+      // 時刻が5:25から8:45の間は8:45までスリープ
+      Thread.sleep(remainSecInDuration(5, 25, 8, 45))
+      // 時刻が15:10から16:30の間は16:30までスリープ
+      Thread.sleep(remainSecInDuration(15, 10, 16, 30))
+      Thread.sleep(15000L)
+    }
+    waitForMarket()
 
     handler.login()
 
@@ -81,7 +84,7 @@ object Technical {
         TechAnal.save()
         handler.close()
         TechAnal.reset()
-        Thread.sleep(remainSecInDuration(15, 18, 16,31))
+        waitForMarket()
         nightSession = true
         handler.login()
       }
@@ -91,7 +94,6 @@ object Technical {
     TechAnal.save()
     handler.close()
     System.exit(0)
-
 
     def printPrices(p: Price): Unit = {
       val m = TechAnal.metrics.head
