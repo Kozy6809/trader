@@ -3,10 +3,10 @@ package trader
 object StrategyEvaluator extends Strategy {
   val s:Strategy = RangeStrategy
   var holding: Judgement.Value = Judgement.STAY
-  var price = 0.0
-  var gain = 0.0
+  var price = 0.0 // 建玉の価格。建玉を決済した時はその時点の価格
+  var gain = 0.0 // 累積利得
 
-  def reset() = {
+  def reset(): Unit = {
     s.reset()
     holding = Judgement.STAY
     price = 0.0
@@ -14,37 +14,38 @@ object StrategyEvaluator extends Strategy {
   }
 
   override def add(p: Price): Judgement.Value = {
+    val sellPrice = p.askPrice - 5
+    val buyPrice = p.askPrice
     var decision = s.add(p)
+    def settle(p: Double): Unit = {gain += price - p; price = p}
     holding match {
       case Judgement.SELL =>
         decision match  {
-          case Judgement.BUY => holding = Judgement.BUY; gain += price - p.price - 5; price = p.price
-          case Judgement.SETTLE_BUY => holding = Judgement.STAY; gain += price - p.price - 5; price = 0.0
+          case Judgement.BUY => holding = Judgement.BUY; settle(buyPrice)
+          case Judgement.SETTLE_BUY => holding = Judgement.STAY; settle(buyPrice)
           case Judgement.SELL => decision = Judgement.STAY
           case Judgement.SETTLE_SELL => println(p.time + " error: not buying, now selling")
           case _ =>
         }
-      case Judgement.BUY => {
+      case Judgement.BUY =>
         decision match {
           case Judgement.BUY => decision = Judgement.STAY
           case Judgement.SETTLE_BUY => println(p.time + " error: not selling, now buying")
-          case Judgement.SELL => holding = Judgement.SELL; gain += p.price - price - 5; price = p.price
-          case Judgement.SETTLE_SELL => holding = Judgement.STAY; gain += p.price - price - 5; price = 0.0
+          case Judgement.SELL => holding = Judgement.SELL; settle(sellPrice)
+          case Judgement.SETTLE_SELL => holding = Judgement.STAY; settle(sellPrice)
           case _ =>
         }
-      }
-      case _ => { // STAY
+      case _ => // STAY
         decision match {
-          case Judgement.BUY => holding = Judgement.BUY; price = p.price
+          case Judgement.BUY => holding = Judgement.BUY; price = buyPrice
           case Judgement.SETTLE_BUY => println(p.time + "error: currently not holding")
-          case Judgement.SELL => holding = Judgement.SELL; price = p.price
+          case Judgement.SELL => holding = Judgement.SELL; price = sellPrice
           case Judgement.SETTLE_SELL => println(p.time + "error: currently not holding")
           case _ =>
         }
-      }
 
     }
-    if (decision != Judgement.STAY) StockLogger.bsMessage(p.time +"\t"+ p.price +"\t"+ gain +"\t"+ decision)
+    if (decision != Judgement.STAY) StockLogger.bsMessage(p.time +"\t"+ price +"\t"+ gain +"\t"+ decision)
 
     decision
 
