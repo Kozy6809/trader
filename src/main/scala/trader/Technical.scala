@@ -170,16 +170,20 @@ object Technical {
       }
     }
     mkMetricses(m)
+    var price: Double = 0.0
     metricses.foreach(m => {
       showPrices(m.head.data, m)
-        Thread.sleep(100)
+      if (price != m.head.data.head.askPrice) {
+        Thread.sleep(1000L)
+        price = m.head.data.head.askPrice
+      } else Thread.sleep(10L)
     })
   }
 
   def replay(fileName: String): Unit = {
     val path = Paths.get(fileName)
     TechAnal.replay(path)
-    TechAnal.save()
+//    TechAnal.save()
     replayShowPrices()
 //    TechAnal.savePeaks()
 //    TechAnal.saveSlides("slides")
