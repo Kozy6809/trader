@@ -87,8 +87,11 @@ object TechAnal {
   }
 
   private[trader] def amtDiff(d: List[Price] = data, n: Int = 20): Int = {
-    if (d.length < n) d.head.amt - d.last.amt
+    val diff = if (d.length < n) (d.head.amt - d.last.amt).toDouble
     else d.head.amt - d(n - 1).amt
+    val time = if (d.length < n) d.last.time.until(d.head.time, ChronoUnit.MILLIS)
+    else d(n - 1).time.until(d.head.time, ChronoUnit.MILLIS)
+    (diff / time * 1000.0).round.toInt
   }
 
   /**
