@@ -27,6 +27,10 @@ object PriceWindow extends JFrame {
   private var strm640 = ""
   private var strm1280 = ""
   private var strm2560 = ""
+  private var strdiffm320 = ""
+  private var strdiffm640 = ""
+  private var strdiffm1280 = ""
+  private var strdiffm2560 = ""
   private var stramtrate = "0"
   private var strdiffamt = "0"
   private var strtime = ""
@@ -66,6 +70,10 @@ object PriceWindow extends JFrame {
     strm640 = d2s(m640)
     strm1280 = d2s(m1280)
     strm2560 = d2s(m2560)
+    strdiffm320 = d2s(diffm320 * 10)
+    strdiffm640 = d2s(diffm640 * 10)
+    strdiffm1280 = d2s(diffm1280 * 10)
+    strdiffm2560 = d2s(diffm2560 * 10)
     stramtrate = d2s(amtrate)
     strdiffamt = diffamt.toString
     strtime = time.toString
@@ -101,9 +109,13 @@ object PriceWindow extends JFrame {
 
       g.drawString(strprice, x(0), hcenter + yoffset)
       g.drawString(strm320, x(1), ym320 + yoffset)
+      g.drawString(strdiffm320, x(1), ym320 + yoffset + 10)
       g.drawString(strm640, x(2), ym640 + yoffset)
+      g.drawString(strdiffm640, x(2), ym640 + yoffset + 10)
       g.drawString(strm1280, x(3), ym1280 + yoffset)
+      g.drawString(strdiffm1280, x(3), ym1280 + yoffset + 10)
       g.drawString(strm2560, x(4), ym2560 + yoffset)
+      g.drawString(strdiffm2560, x(4), ym2560 + yoffset + 10)
       g.drawString(stramtrate, 5, hcenter + yoffset)
       g.drawString(strdiffamt, 5, hcenter + yoffset + 10)
       g.drawString(strtime, x(1), 10)
