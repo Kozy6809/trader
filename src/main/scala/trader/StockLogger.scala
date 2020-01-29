@@ -5,7 +5,7 @@ import java.time.LocalTime
 
 object StockLogger {
   var replaymode = false
-  private val writer: PrintWriter = if (replaymode) _ else new PrintWriter(new File("trade.log"))
+  private val writer: PrintWriter = if (replaymode) null else new PrintWriter(new File("trade.log"))
   private val bsLogName = if (replaymode) "bsreplay.log" else "bs.log"
   private val bswriter = new PrintWriter(new File(bsLogName))
 
