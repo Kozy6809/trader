@@ -56,6 +56,7 @@ object Technical {
 
   def main(args: Array[String]): Unit = {
     if (args.length > 0) {
+      StockLogger.replaymode = true
       if (args(0) == "-f") replayAll(args(1))
       else replay(args(0))
       System.exit(0)
