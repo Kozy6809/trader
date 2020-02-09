@@ -53,8 +53,8 @@ object TechAnal {
     if (data.nonEmpty && p.amt == data.head.amt) false
     else {
       data = p :: data
-      metrics = new Metrics(data) :: metrics
       SlidingWindow.add(data)
+      metrics = new Metrics(data, SlidingWindow.slides) :: metrics
       StrategyEvaluator.add(p)
       true
     }

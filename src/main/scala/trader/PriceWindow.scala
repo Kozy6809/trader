@@ -34,6 +34,8 @@ object PriceWindow extends JFrame {
   private var stramtrate = "0"
   private var strdiffamt = "0"
   private var strtime = ""
+  private var yrangemin = 0
+  private var yrangemax = 0
 
   def init(): Unit = {
     val p = PricePanel
@@ -47,7 +49,8 @@ object PriceWindow extends JFrame {
                price: Double, prevPrice: Double,
               m320: Double, m640: Double, m1280: Double, m2560: Double,
               diffm320: Double, diffm640: Double, diffm1280: Double, diffm2560: Double,
-              amtrate: Double, diffamt: Int): Unit = {
+              amtrate: Double, diffamt: Int,
+             rangemin: Double, rangemax: Double): Unit = {
 
     def toYpos(d: Double): Int = hcenter - ((d - price) * scaleFactor).round.toInt
     yprice = toYpos(price)
@@ -55,6 +58,8 @@ object PriceWindow extends JFrame {
     ym640 = toYpos(m640)
     ym1280 = toYpos(m1280)
     ym2560 = toYpos(m2560)
+    yrangemin = toYpos(rangemin)
+    yrangemax = toYpos(rangemax)
 
     def diff2Ylen(d: Double): Int = (d * 5 * scaleFactor).round.toInt
 
@@ -119,6 +124,10 @@ object PriceWindow extends JFrame {
       g.drawString(stramtrate, 5, hcenter + yoffset)
       g.drawString(strdiffamt, 5, hcenter + yoffset + 10)
       g.drawString(strtime, x(1), 10)
+
+      g.setColor(java.awt.Color.red)
+      g.drawLine(0, yrangemin + yoffset, w, yrangemin + yoffset)
+      g.drawLine(0, yrangemax + yoffset, w, yrangemax + yoffset)
     }
   }
 }

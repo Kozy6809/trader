@@ -8,7 +8,7 @@ import java.time.temporal.ChronoUnit
   * 出来高/sec
   * 移動平均(320, 640, 1280, 2560sec)
   */
-class Metrics(val data: List[Price]) {
+class Metrics(val data: List[Price], val slides: List[SlidingWindow]) {
   private[trader] val amtrate = if (data.length < 2) 0.0
   else (data.head.amt - data(1).amt) / (data(1).time.until(data.head.time, ChronoUnit.MILLIS) / 1000.0)
   private[trader] val m320 = ma(320)
