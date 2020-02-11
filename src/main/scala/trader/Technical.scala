@@ -81,7 +81,7 @@ object Technical {
 
       trading()
 
-      if (!nightSession && remainSecInDuration(15, 18, 15,19) > 0) {
+      if (!nightSession && remainSecInDuration(15, 10, 15,11) > 0) {
         TechAnal.save()
         handler.close()
         TechAnal.reset()
@@ -90,7 +90,7 @@ object Technical {
         handler.login()
       }
 
-      if (nightSession && remainSecInDuration(5, 33, 5,34) > 0) stopRequest = true
+      if (nightSession && remainSecInDuration(5, 25, 5,26) > 0) stopRequest = true
     }
     TechAnal.save()
     handler.close()
