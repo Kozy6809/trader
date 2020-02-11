@@ -1,6 +1,6 @@
 package trader
 
-class TrendStrategy extends Strategy {
+object TrendStrategy extends Strategy {
   object  Status extends Enumeration {
     val MAY_ENTER, IN_THERE, MAY_CHANGE, OUT_THERE = Value
   }
@@ -8,6 +8,7 @@ class TrendStrategy extends Strategy {
   private var holding = Judgement.STAY
   private var positionAskPrice = 0.0
   private var direction = 0 // 予想される値動き。上昇/下降/停滞
+  private var pole = 0.0
 
   private def direction2action(): Judgement.Value = {
     if (direction > 0) Judgement.BUY
@@ -15,17 +16,32 @@ class TrendStrategy extends Strategy {
     else Judgement.STAY
   }
 
+  private def settle(holding: Judgement.Value): Judgement.Value = {
+    holding match {
+      case Judgement.BUY => Judgement.SETTLE_SELL
+      case Judgement.SELL => Judgement.SETTLE_BUY
+      case _ => Judgement.STAY
+    }
+  }
+
   override def add(p: Price): Judgement.Value = {
     analyze(p) match {
       case Status.MAY_ENTER =>
-        status = Status.MAY_ENTER
+        status = Status.IN_THERE
         positionAskPrice = p.askPrice
+        pole = p.askPrice
         holding = direction2action()
+        println(holding + " positioned at " + positionAskPrice)
         holding
-
-      case _ =>
+      case Status.MAY_CHANGE =>
+        status = Status.OUT_THERE
+        println("settled at " + p.askPrice)
+        val r = settle(holding)
+        pole = 0.0
+        holding = Judgement.STAY
+        r
+      case _ => Judgement.STAY
     }
-    Judgement.STAY
   }
 
   override def reset(): Unit =  {
@@ -35,14 +51,6 @@ class TrendStrategy extends Strategy {
   }
 
   private def analyze(p: Price): Status.Value = {
-    status match {
-      case Status.OUT_THERE =>
-        if (isMayEnter(p)) Status.MAY_ENTER
-      case Status.MAY_ENTER =>
-        Status.IN_THERE
-      case Status.IN_THERE =>
-      case Status.MAY_CHANGE =>
-    }
     /*
     開始条件:
     abs(diffm320) > 0.3tick
@@ -55,15 +63,45 @@ class TrendStrategy extends Strategy {
     def isMayEnter(p: Price): Boolean = {
       val diffma = TechAnal.maDiff()
       val m = TechAnal.metrics.head
-      if (diffma._1.abs > 1.5 && diffma._2.abs > 1.5 &&
-        (m.m320 - m.m640).abs > 10.0 && (p.askPrice - m.m320).abs > 15.0) {
-        val sumsgn = diffma._1.signum + diffma._2.signum + (p.askPrice - m.m320).signum + (m.m320 - m.m640).signum
-        if (sumsgn.abs == 4) {
+      if (diffma._1.abs > 1.0 && diffma._2.abs > 1.0 &&
+        (p.askPrice - m.m320).abs > 5.0 && (m.m320 - m.m640).abs > 2.5 &&
+        (m.m640 - m.m1280).abs > 1.0) {
+        val sumsgn = diffma._1.signum + diffma._2.signum +
+          (p.askPrice - m.m320).signum + (m.m320 - m.m640).signum + (m.m640 - m.m1280).signum
+        if (sumsgn.abs == 5) {
           direction = sumsgn.signum
-          true
+          val r = SlidingWindow.calcRange()
+          val e = if (direction > 0) r._2 else r._1
+          e == p.askPrice
         } else false
       } else false
     }
-    Status.OUT_THERE
+
+    /*
+    終了条件:
+    askPriceがm640を逆方向に割り込む
+    sgn(askPrice - m640) == -direction
+     */
+    def isMayChange(p: Price): Boolean = {
+      if (pole == 0.0 ||
+        (direction > 0 && pole < p.askPrice) ||
+        (direction < 0 && pole > p.askPrice)) {
+        pole = p.askPrice
+      }
+      (pole - p.askPrice).abs >= 15.0 && (pole - p.askPrice).signum == direction
+//      (p.askPrice - TechAnal.metrics.head.m640).signum == -direction
+    }
+
+    status match {
+      case Status.OUT_THERE =>
+        if (isMayEnter(p)) Status.MAY_ENTER else Status.OUT_THERE
+      case Status.MAY_ENTER =>
+        Status.IN_THERE
+      case Status.IN_THERE =>
+        if (isMayChange(p)) Status.MAY_CHANGE else Status.IN_THERE
+      case Status.MAY_CHANGE =>
+        Status.OUT_THERE
+    }
+
   }
 }

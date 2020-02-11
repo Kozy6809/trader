@@ -186,7 +186,7 @@ object Technical {
     val path = Paths.get(fileName)
     TechAnal.replay(path)
 //    TechAnal.save()
-    replayShowPrices()
+//    replayShowPrices()
 //    TechAnal.savePeaks()
 //    TechAnal.saveSlides("slides")
     StockLogger.close()

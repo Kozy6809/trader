@@ -1,7 +1,7 @@
 package trader
 
 object StrategyEvaluator extends Strategy {
-  val s:Strategy = RangeStrategy
+  val s:Strategy = TrendStrategy
   var holding: Judgement.Value = Judgement.STAY
   var price = 0.0 // 建玉の価格。建玉を決済した時はその時点の価格
   var gain = 0.0 // 累積利得
@@ -17,12 +17,12 @@ object StrategyEvaluator extends Strategy {
     val sellPrice = p.askPrice - 5
     val buyPrice = p.askPrice
     var decision = s.add(p)
-    def settle(p: Double): Unit = {gain += price - p; price = p}
+    def settle(d: Double, p: Double): Unit = {gain += d; price = p}
     holding match {
       case Judgement.SELL =>
         decision match  {
-          case Judgement.BUY => holding = Judgement.BUY; settle(buyPrice)
-          case Judgement.SETTLE_BUY => holding = Judgement.STAY; settle(buyPrice)
+          case Judgement.BUY => holding = Judgement.BUY; settle(price - buyPrice, buyPrice)
+          case Judgement.SETTLE_BUY => holding = Judgement.STAY; settle(price - buyPrice, buyPrice)
           case Judgement.SELL => decision = Judgement.STAY
           case Judgement.SETTLE_SELL => println(p.time + " error: not buying, now selling")
           case _ =>
@@ -31,8 +31,8 @@ object StrategyEvaluator extends Strategy {
         decision match {
           case Judgement.BUY => decision = Judgement.STAY
           case Judgement.SETTLE_BUY => println(p.time + " error: not selling, now buying")
-          case Judgement.SELL => holding = Judgement.SELL; settle(sellPrice)
-          case Judgement.SETTLE_SELL => holding = Judgement.STAY; settle(sellPrice)
+          case Judgement.SELL => holding = Judgement.SELL; settle(sellPrice - price, sellPrice)
+          case Judgement.SETTLE_SELL => holding = Judgement.STAY; settle(sellPrice - price, sellPrice)
           case _ =>
         }
       case _ => // STAY
