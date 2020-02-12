@@ -88,7 +88,13 @@ object TrendStrategy extends Strategy {
         (direction < 0 && pole > p.askPrice)) {
         pole = p.askPrice
       }
-      (pole - p.askPrice).abs >= 15.0 && (pole - p.askPrice).signum == direction
+      val d = p.askPrice - positionAskPrice
+      val d320 = p.askPrice - TechAnal.metrics.head.m320
+      val r = (d.abs >= 10 && d.signum == direction) ||
+        (d.abs >= 5.0 && d.signum == -direction && d320.signum == -direction)
+//      val r = (pole - p.askPrice).abs >= 15.0 && (pole - p.askPrice).signum == direction
+      if (r) println(pole +" "+ p.askPrice)
+      r
 //      (p.askPrice - TechAnal.metrics.head.m640).signum == -direction
     }
 
