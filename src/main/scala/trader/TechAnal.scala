@@ -28,6 +28,7 @@ object TechAnal {
   private[trader] var prevRange = (0.0, 0.0)
   private[trader] var currentRange = (0.0, 0.0)
   private[trader] var newRange = false
+  private var priceOccurrence = scala.collection.mutable.Map.empty[Double, LocalDateTime]
 
   def reset(): Unit = {
     data = List.empty[Price]
@@ -43,6 +44,7 @@ object TechAnal {
     atPeakDetectedPrice = 0.0 // ピーク検出時点の価格
     prevRange = (0.0, 0.0)
     currentRange = (0.0, 0.0)
+    priceOccurrence = scala.collection.mutable.Map.empty[Double, LocalDateTime]
   }
 
   def add(p: Price): Boolean = {
@@ -56,6 +58,8 @@ object TechAnal {
       SlidingWindow.add(data)
       metrics = new Metrics(data, SlidingWindow.slides) :: metrics
       StrategyEvaluator.add(p)
+      val intvl = priceSurvey(p.askPrice, p.time)
+      println(p.askPrice +" "+ intvl)
       true
     }
   }
@@ -92,6 +96,17 @@ object TechAnal {
     val time = if (d.length < n) d.last.time.until(d.head.time, ChronoUnit.MILLIS)
     else d(n - 1).time.until(d.head.time, ChronoUnit.MILLIS)
     (diff / time * 1000.0).round.toInt
+  }
+
+  /**
+    * 価格が以前にも出現していれば今の時刻とのインターバルを返す。以前に出現していなければLongの最大値を返す
+    */
+  def priceSurvey(price: Double, time: LocalDateTime = LocalDateTime.now()): Long = {
+    val prev = priceOccurrence.put(price, time)
+    prev match  {
+      case Some(s) => s.until(time, ChronoUnit.SECONDS)
+      case None => Long.MaxValue
+    }
   }
 
   /**
@@ -185,6 +200,7 @@ object TechAnal {
     else if (lowerTrend < 0.0) lowerTrend
     else 0.0
   }
+
   def isNewRange: Boolean = {
     val r = newRange
     newRange = false
