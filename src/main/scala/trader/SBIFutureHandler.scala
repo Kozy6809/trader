@@ -94,8 +94,18 @@ object SBIFutureHandler {
     priceBoard()
     StockLogger.writeMessage("price board displayed")
 
-    showContentsFrame(0)
-
+    try {
+      showContentsFrame(0)
+    } catch {
+      case e: Exception =>
+        StockLogger.writeMessage(e.getMessage)
+        close()
+        genDriver()
+        driver.get("https://www.sbisec.co.jp/ETGate/?OutSide=on&_ControlID=WPLETsmR001Control&_DataStoreID=DSWPLETsmR001Control&sw_page=Future&cat1=home&cat2=none&getFlg=on")
+        wait.until(ExpectedConditions.visibilityOfElementLocated(By.name("main")))
+        priceBoard()
+        showContentsFrame(0)
+    }
     StockLogger.writeMessage("new SELL screen displayed")
   }
 
