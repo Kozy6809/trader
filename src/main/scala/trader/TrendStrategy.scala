@@ -63,16 +63,16 @@ object TrendStrategy extends Strategy {
     def isMayEnter(p: Price): Boolean = {
       val diffma = TechAnal.maDiff()
       val m = TechAnal.metrics.head
-      if (diffma._1.abs > 1.0 && diffma._2.abs > 1.0 &&
-        (p.askPrice - m.m320).abs > 5.0 && (m.m320 - m.m640).abs > 2.5 &&
-        (m.m640 - m.m1280).abs > 1.0) {
+      if (diffma._1.abs > 0.0 && diffma._2.abs > 0.0 &&
+        (p.askPrice - m.m320).abs > 5.0 && (m.m320 - m.m640).abs > 0.0 &&
+        (m.m640 - m.m1280).abs > 0.0) {
         val sumsgn = diffma._1.signum + diffma._2.signum +
           (p.askPrice - m.m320).signum + (m.m320 - m.m640).signum + (m.m640 - m.m1280).signum
         if (sumsgn.abs == 5) {
           direction = sumsgn.signum
           val r = SlidingWindow.calcRange()
           val e = if (direction > 0) r._2 else r._1
-          e == p.askPrice
+          r._2 - r._1 >= 30.0 && e == p.askPrice
         } else false
       } else false
     }
@@ -88,14 +88,31 @@ object TrendStrategy extends Strategy {
         (direction < 0 && pole > p.askPrice)) {
         pole = p.askPrice
       }
+      val diffma = TechAnal.maDiff()
+      val df320 = diffma._1
       val d = p.askPrice - positionAskPrice
       val d320 = p.askPrice - TechAnal.metrics.head.m320
-      val r = (d.abs >= 10 && d.signum == direction) ||
-        (d.abs >= 5.0 && d.signum == -direction && d320.signum == -direction)
+      val d640 = p.askPrice - TechAnal.metrics.head.m640
+      val d1280 = p.askPrice - TechAnal.metrics.head.m1280
+      val dpp = pole - positionAskPrice
+      val dpask = p.askPrice - positionAskPrice
+      val dp320 = pole - TechAnal.metrics.head.m320
+      val drb = TechAnal.metrics.head.m1280 - TechAnal.metrics.head.m2560
+      // scalping
+//      val r = (d.abs >= 10 && d.signum == direction) ||
+//        (d.abs >= 5.0 && d.signum == -direction && d320.signum == -direction)
+
 //      val r = (pole - p.askPrice).abs >= 15.0 && (pole - p.askPrice).signum == direction
-      if (r) println(pole +" "+ p.askPrice)
-      r
-//      (p.askPrice - TechAnal.metrics.head.m640).signum == -direction
+//      if (r) println(pole +" "+ p.askPrice)
+//      r
+      d1280.signum == -direction ||
+        (!(drb.signum == direction && drb.abs >= 5.0) && (
+      (dpp == 0.0 && d.abs >= 10.0 && d.signum == -direction && df320.abs < 1.0 && df320.signum == -direction) ||
+        (dpp.abs == 5.0 && d.abs >= 5.0 && d.signum == -direction && d320.signum == -direction) ||
+        (dpp.abs == 10.0 && d.signum == -direction && d320.signum == -direction) ||
+        (dpp.abs >= 15.0 && dpask.abs <= dp320.abs * 0.5 && dpask.signum == direction)
+         ||
+      d640.signum == -direction))
     }
 
     status match {
