@@ -185,6 +185,7 @@ object Technical {
   def replay(fileName: String): Unit = {
     val path = Paths.get(fileName)
     TechAnal.replay(path)
+    Haken.save()
 //    TechAnal.save()
 //    replayShowPrices()
 //    TechAnal.savePeaks()

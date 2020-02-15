@@ -8,5 +8,6 @@ object Settings {
   private[trader] val pwd = lines.get(1)
   private[trader] val pwd2 = lines.get(2)
 
+  private[trader] val hakenThreshold = 450L
   private[trader] var replaymode = false
 }

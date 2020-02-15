@@ -29,7 +29,7 @@ object TechAnal {
   private[trader] var currentRange = (0.0, 0.0)
   private[trader] var newRange = false
   private var priceOccurrence = scala.collection.mutable.Map.empty[Double, LocalDateTime]
-  private var currentOccurrence = 0.0 // 最新の登録価格値
+  private var currentOccurrence = -1.0 // 最新の登録価格値
 
   def reset(): Unit = {
     data = List.empty[Price]
@@ -46,7 +46,7 @@ object TechAnal {
     prevRange = (0.0, 0.0)
     currentRange = (0.0, 0.0)
     priceOccurrence = scala.collection.mutable.Map.empty[Double, LocalDateTime]
-    currentOccurrence = 0.0
+    currentOccurrence = -1.0
   }
 
   def add(p: Price): Boolean = {
@@ -60,8 +60,7 @@ object TechAnal {
       SlidingWindow.add(data)
       metrics = new Metrics(data, SlidingWindow.slides) :: metrics
       StrategyEvaluator.add(p)
-      val intvl = priceSurvey(p.askPrice, p.time)
-      println(p.askPrice +" "+ intvl)
+      Haken.add(p)
       true
     }
   }
@@ -106,10 +105,9 @@ object TechAnal {
    * 価格が前回の価格から飛び離れている場合、間の価格も今回と同じ時刻に出現したとみなして登録する
    *
     */
-  def priceSurvey(price: Double, time: LocalDateTime = LocalDateTime.now()): Long = {
+  def registerPrice(price: Double, time: LocalDateTime = LocalDateTime.now()): Long = {
     val prev = priceOccurrence.put(price, time)
-
-    if ((price - currentOccurrence).abs > 5.0) {
+    if (currentOccurrence > 0 && (price - currentOccurrence).abs > 5.0) {
       val intp = price.toInt
       val intc = currentOccurrence.toInt
       val r = if (intp > intc) (intc until intp by 5).tail else (intp until intc by 5).tail
