@@ -11,7 +11,7 @@ class Haken(val p: Price) {
 
 object Haken {
   private val thres = Settings.hakenThreshold
-  private var hakens = List.empty[Haken]
+  private[trader] var hakens = List.empty[Haken]
   private var prevPrice = 0.0
 
   def reset(): Unit = {
