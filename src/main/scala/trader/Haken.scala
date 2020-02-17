@@ -1,6 +1,6 @@
 package trader
 
-import java.io.PrintWriter
+import java.io.{FileOutputStream, PrintWriter}
 import java.time.temporal.ChronoUnit
 
 class Haken(val p: Price) {
@@ -13,18 +13,21 @@ object Haken {
   private val thres = Settings.hakenThreshold
   private[trader] var hakens = List.empty[Haken]
   private var prevPrice = 0.0
+  private[trader] var newHaken: Boolean = false
 
   def reset(): Unit = {
     hakens = List.empty[Haken]
     prevPrice = 0.0
+    newHaken = false
   }
 
   /**
-   * 新しいHakenが出現したらtrue
+   * 最初を除き、新しいHakenが出現したらtrue
    */
   def add(p: Price): Boolean = {
     val itvl = TechAnal.registerPrice(p.askPrice, p.time)
     if (itvl > thres) {
+      if (hakens.nonEmpty) newHaken = true
       val lapsTime = if (hakens.isEmpty) Long.MaxValue
       else hakens.head.p.time.until(p.time, ChronoUnit.SECONDS)
       val h = new Haken(p)
@@ -34,21 +37,20 @@ object Haken {
         if (h.direction != hakens.head.direction) h.lapsTime = -1L
       }
       hakens = h :: hakens
-      prevPrice = p.askPrice
-      true
     } else {
-      prevPrice = p.askPrice
+      newHaken = false
       if (hakens.nonEmpty) {
         val h = hakens.head
         val diff = p.askPrice - h.p.askPrice
         if ((diff - h.worstDecline).signum == -h.direction) h.worstDecline = diff
       }
-      false
     }
+    prevPrice = p.askPrice
+    newHaken
   }
 
-  def save(): Unit = {
-    val writer = new PrintWriter("hakens")
+  def save(append: Boolean = true): Unit = {
+    val writer = new PrintWriter(new FileOutputStream("hakens", append))
     hakens.foreach(h => {
       writer.print(h.p.time +"\t")
       writer.print(h.p.askPrice +"\t")

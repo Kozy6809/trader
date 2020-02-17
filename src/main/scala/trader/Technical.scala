@@ -200,8 +200,10 @@ object Technical {
         println(t)
         StockLogger.bsMessage(t.toString)
         TechAnal.replay(t)
+        Haken.save()
         TechAnal.reset()
         StrategyEvaluator.reset()
+        Haken.reset()
       }
     }
 
