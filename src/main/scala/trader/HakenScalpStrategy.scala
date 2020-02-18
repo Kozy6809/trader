@@ -8,6 +8,7 @@ object HakenScalpStrategy extends Strategy {
   }
   private var status = Status.OUT_THERE
   private var holding = Judgement.STAY
+  private var currentHaken: Haken = _
   private var positionPrice: Price = _
   private var direction = 0 // 予想される値動き。上昇/下降/停滞
   private var entryPrice: Price = _
@@ -27,6 +28,7 @@ object HakenScalpStrategy extends Strategy {
   }
 
   override def add(p: Price): Judgement.Value = {
+    if (Haken.newHaken) currentHaken = Haken.hakens.head
     status = analyze(p)
     status match {
       case Status.MAY_ENTER =>
@@ -60,18 +62,21 @@ object HakenScalpStrategy extends Strategy {
   private def innerPrice(p: Price, offset: Double): Double = p.askPrice - offset * direction
   private def isInner(price: Double, ref: Double): Boolean = (price - ref).signum * direction <= 0
   private def laps(from: Price, to: Price): Long = from.time.until(to.time, ChronoUnit.SECONDS)
+
   private def analyze(p: Price): Status.Value = {
 
     def isMayEnter(p: Price): Boolean = {
       val h = Haken
-      direction = h.hakens.head.direction
-      h.newHaken && (h.hakens.head.p.askPrice - h.hakens(1).p.askPrice).abs >= Settings.hakenEnterThreshold
+      if (h.newHaken) {
+        direction = currentHaken.direction
+        (currentHaken.p.askPrice - h.hakens(1).p.askPrice).abs >= Settings.hakenEnterThreshold
+      } else false
     }
 
     def isMayChange(p: Price): Boolean = {
-      ((p.askPrice - entryPrice.askPrice).abs >= Settings.hakenScalpThreshold && !isInner(p.askPrice, entryPrice.askPrice)) ||
-      isInner(p.askPrice, innerPrice(positionPrice, Settings.hakeDeclineThreshold)) ||
-      laps(positionPrice, p) >= Settings.hakenWaitThreshold
+      (currentHaken.p.askPrice - entryPrice.askPrice).abs >= Settings.hakenScalpThreshold ||
+      isInner(p.askPrice, innerPrice(currentHaken.p, Settings.hakenDeclineThreshold)) ||
+      laps(currentHaken.p, p) >= Settings.hakenWaitThreshold
     }
 
     status match {
@@ -80,7 +85,7 @@ object HakenScalpStrategy extends Strategy {
       case Status.MAY_ENTER =>
         Status.ENTRY
       case Status.ENTRY =>
-        if (p.askPrice != entryPrice.askPrice && isInner(p.askPrice, entryPrice.askPrice)) Status.ENTERED
+        if (p.askPrice != currentHaken.p.askPrice && isInner(p.askPrice, currentHaken.p.askPrice)) Status.ENTERED
         else Status.ENTRY
       case Status.ENTERED =>
         Status.IN_THERE
