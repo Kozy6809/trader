@@ -97,12 +97,12 @@ object Technical {
     System.exit(0)
 
     def printPrices(p: Price): Unit = {
-      val m = TechAnal.metrics.head
+      val m = Metrics.metrics.head
       val amtrate = f"${m.amtrate}%.1f"
-      val m320 = f"${m.m320}%.1f"
-      val m640 = f"${m.m640}%.1f"
-      val m1280 = f"${m.m1280}%.1f"
-      val m2560 = f"${m.m2560}%.1f"
+      val m320 = f"${m.m5}%.1f"
+      val m640 = f"${m.m10}%.1f"
+      val m1280 = f"${m.m20}%.1f"
+      val m2560 = f"${m.m40}%.1f"
       println(List(p.price, p.askPrice, p.amt, amtrate, m320, m640, m1280, m2560).mkString("\t"))
     }
 
@@ -148,14 +148,14 @@ object Technical {
     }
   }
 
-  def showPrices(data: List[Price] = TechAnal.data, metrics: List[Metrics] = TechAnal.metrics, srange: (Double, Double) = SlidingWindow.range) :Unit = {
+  def showPrices(data: List[Price] = TechAnal.data, metrics: List[Metrics] = Metrics.metrics, srange: (Double, Double) = SlidingWindow.range) :Unit = {
     println(srange)
     val p = data.head
     val prev = if (data.size > 1) data(1) else p
     val m = metrics.head
     val diffma = TechAnal.maDiff(m = metrics)
     val diffamt = TechAnal.amtDiff(d = data)
-    PriceWindow.setData(p.time, p.askPrice, prev.askPrice, m.m320, m.m640, m.m1280, m.m2560,
+    PriceWindow.setData(p.time, p.askPrice, prev.askPrice, m.m5, m.m10, m.m20, m.m40,
       diffma._1, diffma._2, diffma._3, diffma._4, m.amtrate, diffamt, srange._1, srange._2)
     PriceWindow.repaint()
   }
@@ -163,7 +163,7 @@ object Technical {
   def replayShowPrices(): Unit = {
     PriceWindow.init()
     var metricses =  List.empty[List[Metrics]]
-    val m = TechAnal.metrics
+    val m = Metrics.metrics
     @tailrec
     def mkMetricses(m: List[Metrics]): Unit = {
       m match {

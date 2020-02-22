@@ -34,19 +34,19 @@ object RangeStrategy extends Strategy {
 
   def isMadiffer: Boolean = {
     if (!madiffer) {
-      val m = TechAnal.metrics.head
-      if (m.m1280 != m.m2560) madiffer = true
+      val m = Metrics.metrics.head
+      if (m.m20 != m.m40) madiffer = true
     }
     madiffer
   }
 
   def isBox: Boolean = {
-    val m = TechAnal.metrics.head
-    if ((m.m320 - m.m1280).abs >= 12.5 || (m.m320 - m.m1280).abs >= 12.5) {
+    val m = Metrics.metrics.head
+    if ((m.m5 - m.m20).abs >= 12.5 || (m.m5 - m.m20).abs >= 12.5) {
       transition = boxMode
       boxMode = false
     }
-    if ((m.m320 - m.m1280).abs <= 10.0 && (m.m320 - m.m2560).abs <= 10.0) {
+    if ((m.m5 - m.m20).abs <= 10.0 && (m.m5 - m.m40).abs <= 10.0) {
       val rate = TechAnal.maRate
       if (rate._2.abs <= 0.2 && rate._3.abs <= 0.2) {
         transition = !boxMode

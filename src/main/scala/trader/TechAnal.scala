@@ -14,7 +14,6 @@ import scala.collection.mutable.ListBuffer
   */
 object TechAnal {
   var data = List.empty[Price]
-  var metrics = List.empty[Metrics]
   var slidingMetrics = List.empty[Metrics]
   var slides = List.empty[SlidingWindow]
   var replayMode = false
@@ -33,7 +32,6 @@ object TechAnal {
 
   def reset(): Unit = {
     data = List.empty[Price]
-    metrics = List.empty[Metrics]
     SlidingWindow.reset()
     replayMode = false
     peaks = List.empty[(Int, Int)] // 直近のピーク位置, ピークをピークと認識した位置。Listの末尾からのインデックスなので要注意
@@ -58,7 +56,7 @@ object TechAnal {
     else {
       data = p :: data
       SlidingWindow.add(data)
-      metrics = new Metrics(data, SlidingWindow.slides) :: metrics
+      Metrics.add(data)
       Haken.add(p)
       StrategyEvaluator.add(p)
       true
@@ -72,22 +70,23 @@ object TechAnal {
   private[trader] def maRate = {
     val t0 = data.head.time.minusSeconds(120)
     val at = data.count(p => p.time.compareTo(t0) >= 0)
-    val m0 = metrics.head
+    val m = Metrics.metrics
+    val m0 = m.head
     if (at > 0) {
-      val m1 = metrics(at - 1)
-      (m0.m320 - m1.m320, m0.m1280 - m1.m1280, m0.m2560 - m1.m2560)
+      val m1 = m(at - 1)
+      (m0.m5 - m1.m5, m0.m20 - m1.m20, m0.m40 - m1.m40)
     } else (0.0, 0.0, 0.0)
   }
 
   /**
    * 直近n項目の移動平均の変化率を返す
    */
-  private[trader] def maDiff(m: List[Metrics] = metrics, n: Int = 20): (Double, Double, Double, Double) = {
+  private[trader] def maDiff(m: List[Metrics] = Metrics.metrics, n: Int = 20): (Double, Double, Double, Double) = {
     if (m.length < n) (0.0, 0.0, 0.0, 0.0)
     else {
       val m0 = m.head
       val m1 = m(n - 1)
-      (m0.m320 - m1.m320, m0.m640 - m1.m640, m0.m1280 - m1.m1280, m0.m2560 - m1.m2560)
+      (m0.m5 - m1.m5, m0.m10 - m1.m10, m0.m20 - m1.m20, m0.m40 - m1.m40)
     }
   }
 
@@ -128,26 +127,27 @@ object TechAnal {
     */
   def detectPeak(gap: Double = 5, sens: Double = 0.8): Boolean = {
     var res = false
-    val peakval = metrics(metrics.length - peaks.head._1 - 1).m320
-    val currentval = metrics.head.m320
+    val m = Metrics.metrics
+    val peakval = m(m.length - peaks.head._1 - 1).m5
+    val currentval = m.head.m5
     val diff = currentval - peakval
 
     if (Math.abs(diff) > gap) {
       if (peakClosing) {
-        val peakCandidateVal = metrics(metrics.length - peakCandidatePos - 1).m320
+        val peakCandidateVal = m(m.length - peakCandidatePos - 1).m5
         val positiveDiff = (currentval - peakCandidateVal) * peakDirection
         if (positiveDiff > 0) {
-          peakCandidatePos = metrics.length - 1
+          peakCandidatePos = m.length - 1
         } else if (positiveDiff < -sens) { // peak detected
           //          println(peakDirection + "peak " + peakCandidatePos + " detected at " + (metrics.length - 1))
-          peaks = (peakCandidatePos, metrics.length - 1) :: peaks
+          peaks = (peakCandidatePos, m.length - 1) :: peaks
           res = true
           peakClosing = false
         }
       } else {
         peakClosing = true
         peakDirection = Math.signum(diff)
-        peakCandidatePos = metrics.length - 1
+        peakCandidatePos = m.length - 1
       }
     } else peakClosing = false
 
@@ -160,12 +160,13 @@ object TechAnal {
     */
   def envelopeExtention(at: LocalDateTime): (Double, Double) = {
     def anExtention(peaks: List[(Int, Int)], at: LocalDateTime): Double = {
-      val p1 = metrics.length - peaks.head._1 - 1
-      val p2 = metrics.length - peaks(1)._1 - 1
+      val m = Metrics.metrics
+      val p1 = m.length - peaks.head._1 - 1
+      val p2 = m.length - peaks(1)._1 - 1
       val t1 = data(p1).time
       val t2 = data(p2).time
-      val v1 = metrics(p1).m320
-      val v2 = metrics(p2).m320
+      val v1 = m(p1).m5
+      val v2 = m(p2).m5
       (v1 - v2) / t2.until(t1, ChronoUnit.MILLIS) * t2.until(at, ChronoUnit.MILLIS) + v2
     }
 
@@ -181,10 +182,11 @@ object TechAnal {
     */
   def peakTrend: Double = {
     def aPeakVal(peaks: List[(Int, Int)], pos: Int): Double = {
+      val m = Metrics.metrics
       peaks.length match {
         case 0 => Double.NaN
-        case 1 => metrics(metrics.length - peaks.head._1 - 1).m320
-        case _ => metrics(metrics.length - peaks(pos)._1 - 1).m320
+        case 1 => m(m.length - peaks.head._1 - 1).m5
+        case _ => m(m.length - peaks(pos)._1 - 1).m5
       }
     }
 
@@ -231,11 +233,11 @@ object TechAnal {
   def save(timeStr: String = legalTimeStr): Unit = {
     val writer = new PrintWriter("techs" + timeStr)
 
-    data.zip(metrics).foreach(d => {
+    data.zip(Metrics.metrics).foreach(d => {
       val d1 = d._1
       val d2 = d._2
       writer.println(List(d1.time, d1.price, d1.askPrice, d1.amt,
-        f"${d2.amtrate}%.1f", f"${d2.m320}%.1f", f"${d2.m640}%.1f", f"${d2.m1280}%.1f", f"${d2.m2560}%.1f").mkString("\t"))
+        f"${d2.amtrate}%.1f", f"${d2.m5}%.1f", f"${d2.m10}%.1f", f"${d2.m20}%.1f", f"${d2.m40}%.1f").mkString("\t"))
     })
     writer.close()
 
@@ -257,7 +259,7 @@ object TechAnal {
     * ピーク位置を保存。保存する時は時刻の新しい方からの、かつ1から始まるインデックスに変換する
     */
   def savePeaks(): Unit = {
-    val len = metrics.length
+    val len = Metrics.metrics.length
     val uw = new PrintWriter("upeaks")
     upeaks.foreach(t => uw.println((len - t._1) + "\t" + (len - t._2)))
     uw.close()

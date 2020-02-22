@@ -62,12 +62,12 @@ object TrendStrategy extends Strategy {
      */
     def isMayEnter(p: Price): Boolean = {
       val diffma = TechAnal.maDiff()
-      val m = TechAnal.metrics.head
+      val m = Metrics.metrics.head
       if (diffma._1.abs > 0.0 && diffma._2.abs > 0.0 &&
-        (p.askPrice - m.m320).abs > 5.0 && (m.m320 - m.m640).abs > 0.0 &&
-        (m.m640 - m.m1280).abs > 0.0) {
+        (p.askPrice - m.m5).abs > 5.0 && (m.m5 - m.m10).abs > 0.0 &&
+        (m.m10 - m.m20).abs > 0.0) {
         val sumsgn = diffma._1.signum + diffma._2.signum +
-          (p.askPrice - m.m320).signum + (m.m320 - m.m640).signum + (m.m640 - m.m1280).signum
+          (p.askPrice - m.m5).signum + (m.m5 - m.m10).signum + (m.m10 - m.m20).signum
         if (sumsgn.abs == 5) {
           direction = sumsgn.signum
           val r = SlidingWindow.calcRange()
@@ -88,16 +88,17 @@ object TrendStrategy extends Strategy {
         (direction < 0 && pole > p.askPrice)) {
         pole = p.askPrice
       }
+      val m = Metrics.metrics
       val diffma = TechAnal.maDiff()
       val df320 = diffma._1
       val d = p.askPrice - positionAskPrice
-      val d320 = p.askPrice - TechAnal.metrics.head.m320
-      val d640 = p.askPrice - TechAnal.metrics.head.m640
-      val d1280 = p.askPrice - TechAnal.metrics.head.m1280
+      val d320 = p.askPrice - m.head.m5
+      val d640 = p.askPrice - m.head.m10
+      val d1280 = p.askPrice - m.head.m20
       val dpp = pole - positionAskPrice
       val dpask = p.askPrice - positionAskPrice
-      val dp320 = pole - TechAnal.metrics.head.m320
-      val drb = TechAnal.metrics.head.m1280 - TechAnal.metrics.head.m2560
+      val dp320 = pole - m.head.m5
+      val drb = m.head.m20 - m.head.m40
       // scalping
 //      val r = (d.abs >= 10 && d.signum == direction) ||
 //        (d.abs >= 5.0 && d.signum == -direction && d320.signum == -direction)

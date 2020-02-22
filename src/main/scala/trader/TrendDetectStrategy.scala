@@ -1,7 +1,7 @@
 package trader
 
 object TrendDetectStrategy extends Strategy {
-  private val ta = TechAnal
+  private val m = Metrics.metrics
   private var lowVolatility = true // SlidingWindowの直近10個の値幅が20円以下の時true
   private var buysell = Judgement.STAY
   private var prevDecision = Judgement.STAY
@@ -25,22 +25,22 @@ object TrendDetectStrategy extends Strategy {
     if (prevDecision == Judgement.BUY && p.price <= prevPrice - 15.0) decision = Judgement.SETTLE_SELL
     else if (prevDecision == Judgement.SELL && p.price >= prevPrice + 15.0) decision = Judgement.SETTLE_BUY
     else {
-      val j = ta.envelopeExtention(p.time)
+      val j = TechAnal.envelopeExtention(p.time)
       buysell match {
         case Judgement.STAY =>
-          if (!j._1.isNaN && ta.metrics.head.m320 > j._1 && Math.abs(p.price - prevPrice) > 10) {
+          if (!j._1.isNaN && m.head.m5 > j._1 && Math.abs(p.price - prevPrice) > 10) {
             println(p.time + " price " + p.price + " exceeds. Let's buy!")
             decision = Judgement.BUY
             buysell = Judgement.BUY
             prevPrice = p.price
-          } else if (!j._2.isNaN && ta.metrics.head.m320 < j._2 && Math.abs(p.price - prevPrice) > 10) {
+          } else if (!j._2.isNaN && m.head.m5 < j._2 && Math.abs(p.price - prevPrice) > 10) {
             println(p.time + " price " + p.price + " decline. Do sell!")
             decision = Judgement.SELL
             buysell = Judgement.SELL
             prevPrice = p.price
         }
         case Judgement.SELL =>
-          if (!j._1.isNaN && ta.metrics.head.m320 > j._1 && Math.abs(p.price - prevPrice) > 10) {
+          if (!j._1.isNaN && m.head.m5 > j._1 && Math.abs(p.price - prevPrice) > 10) {
             if (!lowVolatility) {
               println(p.time + " price " + p.price + " exceeds. Let's buy!")
               decision = Judgement.BUY
@@ -52,7 +52,7 @@ object TrendDetectStrategy extends Strategy {
             prevPrice = p.price
           }
         case Judgement.BUY =>
-          if (!j._2.isNaN && ta.metrics.head.m320 < j._2 && Math.abs(p.price - prevPrice) > 10) {
+          if (!j._2.isNaN && m.head.m5 < j._2 && Math.abs(p.price - prevPrice) > 10) {
             if (!lowVolatility) {
               println(p.time + " price " + p.price + " decline. Do sell!")
               decision = Judgement.SELL
@@ -74,7 +74,7 @@ object TrendDetectStrategy extends Strategy {
   }
 
   def checkLowVolatility: Boolean = {
-    val v = ta.slides.take(10).map(s => s.min)
+    val v = TechAnal.slides.take(10).map(s => s.min)
     v.max - v.min <= 20
   }
 }
