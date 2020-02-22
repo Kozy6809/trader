@@ -163,7 +163,7 @@ object Technical {
   def replayShowPrices(): Unit = {
     PriceWindow.init()
     var metricses =  List.empty[List[Metrics]]
-    val m = Metrics.metrics
+    val metrics = Metrics.metrics
     @tailrec
     def mkMetricses(m: List[Metrics]): Unit = {
       m match {
@@ -171,23 +171,23 @@ object Technical {
         case x :: xs => metricses = m :: metricses; mkMetricses(xs)
       }
     }
-    mkMetricses(m)
+    mkMetricses(metrics)
     var price: Double = 0.0
     metricses.foreach(m => {
       showPrices(m.head.data, m, SlidingWindow.calcRange(m.head.slides))
       if (price != m.head.data.head.askPrice) {
-        Thread.sleep(1000L)
+        Thread.sleep(100L)
         price = m.head.data.head.askPrice
-      } else Thread.sleep(10L)
+      } else Thread.sleep(1L)
     })
   }
 
   def replay(fileName: String): Unit = {
     val path = Paths.get(fileName)
     TechAnal.replay(path)
-    Haken.save()
+//    Haken.save()
 //    TechAnal.save()
-//    replayShowPrices()
+    replayShowPrices()
 //    TechAnal.savePeaks()
 //    TechAnal.saveSlides("slides")
     StockLogger.close()

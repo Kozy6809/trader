@@ -33,6 +33,8 @@ object TechAnal {
   def reset(): Unit = {
     data = List.empty[Price]
     SlidingWindow.reset()
+    Metrics.reset()
+    Haken.reset()
     replayMode = false
     peaks = List.empty[(Int, Int)] // 直近のピーク位置, ピークをピークと認識した位置。Listの末尾からのインデックスなので要注意
     upeaks = List.empty[(Int, Int)] // 上に凸なピーク

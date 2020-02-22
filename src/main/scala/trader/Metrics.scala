@@ -29,11 +29,14 @@ class Metrics(val data: List[Price], val slides: List[SlidingWindow]) {
   }
 
   def ema(i:Int, period: Long): Double = {
-    val from = data.head.time.minusSeconds(period)
-    val dataSlice = Metrics.metrics.takeWhile(m => m.data.head.time.compareTo(from) >= 0)
-    val latest = dataSlice.head.mas(i)
-    val sum = dataSlice.map(m => m.mas(i)).sum + latest
-    sum / (dataSlice.length + 1)
+    if (Metrics.metrics.isEmpty) data.head.price
+    else {
+      val prev = Metrics.metrics.head.mas(i)
+      val from = data.head.time.minusSeconds(period)
+      val nprev = Metrics.metrics.takeWhile(m => m.data.head.time.compareTo(from) >= 0).length
+      val k = 2.0 / (nprev + 1)
+      prev + k * (data.head.price - prev)
+    }
   }
 
 }
