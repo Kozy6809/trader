@@ -74,7 +74,9 @@ object HakenScalpStrategy extends Strategy {
     }
 
     def isMayChange(p: Price): Boolean = {
-      (currentHaken.p.askPrice - entryPrice.askPrice).abs >= Settings.hakenScalpThreshold ||
+      val basePrice = if ((entryPrice.askPrice - positionPrice.askPrice).signum == direction) entryPrice else positionPrice
+
+        (currentHaken.p.askPrice - basePrice.askPrice).abs >= Settings.hakenScalpThreshold ||
       isInner(p.askPrice, innerPrice(currentHaken.p, Settings.hakenDeclineThreshold)) ||
       laps(currentHaken.p, p) >= Settings.hakenWaitThreshold
     }

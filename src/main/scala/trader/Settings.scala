@@ -11,7 +11,7 @@ object Settings {
   private[trader] val hakenThreshold = 450L
   private[trader] val hakenEnterThreshold = 35.0
   private[trader] val hakenWaitThreshold = 262L
-  private[trader] val hakenDeclineThreshold = 20.0
-  private[trader] val hakenScalpThreshold = 10.0
+  private[trader] val hakenDeclineThreshold = 35.0
+  private[trader] val hakenScalpThreshold = 20.0
   private[trader] var replaymode = false
 }
