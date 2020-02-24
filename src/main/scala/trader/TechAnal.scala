@@ -59,7 +59,7 @@ object TechAnal {
       data = p :: data
       SlidingWindow.add(data)
       Metrics.add(data)
-      Haken.add(p)
+      Haken.add(Metrics.metrics)
       StrategyEvaluator.add(p)
       true
     }
