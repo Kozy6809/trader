@@ -80,8 +80,11 @@ object HakenStageStrategy extends Strategy {
     }
 
     def isMayChange(p: Price): Boolean = {
-      (direction != prevDirection) ||
-      isInner(p.askPrice, innerPrice(currentHaken.p, Settings.hakenDeclineThreshold))
+      val h = Haken
+      if (h.newHaken) {
+        (direction != prevDirection) ||
+          isInner(p.askPrice, innerPrice(currentHaken.p, Settings.hakenDeclineThreshold))
+      } else false
     }
 
     status match {
