@@ -38,7 +38,17 @@ object SBIFutureHandler {
     System.setProperty("webdriver.gecko.driver", "C:/geckodriver/geckodriver.exe")
     val firefoxOptions = new FirefoxOptions
     firefoxOptions.setBinary(firefoxBinary)
-    driver = new FirefoxDriver(firefoxOptions)
+    var done = false
+    while (!done) {
+      try {
+        driver = new FirefoxDriver(firefoxOptions)
+        done = true
+      } catch {
+        case e: Exception =>
+          StockLogger.writeMessage(e.getMessage)
+          Thread.sleep(6000)
+      }
+    }
     println(driver)
 
 
@@ -91,8 +101,22 @@ object SBIFutureHandler {
     StockLogger.writeMessage("login done")
     loginTime = LocalDateTime.now()
 
-    priceBoard()
-    StockLogger.writeMessage("price board displayed")
+    done = false
+    while (!done) {
+      try {
+        priceBoard()
+        StockLogger.writeMessage("price board displayed")
+        done = true
+      } catch {
+        case e: Exception =>
+          StockLogger.writeMessage("can't display price board")
+          close()
+          genDriver()
+          // ログイン画面にアクセス
+          driver.get("https://www.sbisec.co.jp/ETGate/?OutSide=on&_ControlID=WPLETsmR001Control&_DataStoreID=DSWPLETsmR001Control&sw_page=Future&cat1=home&cat2=none&getFlg=on")
+          wait.until(ExpectedConditions.visibilityOfElementLocated(By.name("main")))
+      }
+    }
 
     try {
       showContentsFrame(0)
