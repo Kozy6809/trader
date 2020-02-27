@@ -15,6 +15,7 @@ object Haken {
   private[trader] var hakens = List.empty[Haken]
   private var prevPrice = 0.0
   private[trader] var newHaken: Boolean = false
+  private[trader] var runlen = 0
 
   def reset(): Unit = {
     hakens = List.empty[Haken]
@@ -35,10 +36,14 @@ object Haken {
       val lapsTime = if (hakens.isEmpty) Long.MaxValue
       else hakens.head.metrics.data.head.time.until(p.time, ChronoUnit.SECONDS)
       val h = new Haken(m)
+      runlen += 1
       h.lapsTime = if (lapsTime > thres) -1L else lapsTime
       if (prevPrice != 0.0) {
         h.direction = (p.askPrice - prevPrice).signum
-        if (h.direction != hakens.head.direction) h.lapsTime = -1L
+        if (h.direction != hakens.head.direction) {
+          h.lapsTime = -1L
+          runlen = 1
+        }
       }
       hakens = h :: hakens
     } else {

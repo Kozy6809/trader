@@ -50,8 +50,12 @@ object SBIFutureHandler {
       }
     }
     println(driver)
+  }
 
-
+  def attemptGenDriver(): Unit = {
+    genDriver()
+    close()
+    println("no error in genDriver ")
   }
 
   def login(): Unit = {

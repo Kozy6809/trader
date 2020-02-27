@@ -62,6 +62,8 @@ object Technical {
       System.exit(0)
     }
 
+    SBIFutureHandler.attemptGenDriver()
+
     val stdinr = new InputStreamReader(System.in)
     PriceWindow.init()
     def waitForMarket(): Unit = {
