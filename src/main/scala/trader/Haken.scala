@@ -58,6 +58,27 @@ object Haken {
     newHaken
   }
 
+  /**
+    * 直近のシーケンスのdirectionがstageに照らして適切かどうかの指数を返す
+    * directionが全て同じかどうかのチェックは行わない
+    */
+  def stagePenalty(len: Int): Int = {
+    def stageMap(h: Haken): Int = {
+      val stage = h.metrics.stage
+      if (h.direction >= 0) {
+        if (stage == 4) -2
+        else if (stage == 3 || stage == 5) -1
+        else 0
+      } else {
+        if (stage == 1) -2
+        else if (stage == 6 || stage == 2) -1
+        else 0
+      }
+    }
+
+    hakens.take(len).map(stageMap).sum
+  }
+
   def save(append: Boolean = true): Unit = {
     val writer = new PrintWriter(new FileOutputStream("hakens", append))
     hakens.foreach(h => {
@@ -68,7 +89,8 @@ object Haken {
       writer.print(h.direction +"\t")
       writer.print(h.lapsTime +"\t")
       writer.print(h.worstDecline +"\t")
-      writer.print(List(f"${m.amtrate}%.1f", f"${m.m5}%.1f", f"${m.m10}%.1f", f"${m.m20}%.1f", f"${m.m40}%.1f").mkString("\t"))
+      writer.print(List(f"${m.amtrate}%.1f", f"${m.m5}%.1f", f"${m.m10}%.1f", f"${m.m20}%.1f", f"${m.m40}%.1f",
+        f"${m.m5 - m.m20}%.1f", f"${m.m20 - m.m40}%.1f").mkString("\t"))
       writer.println("\t"+ m.stage)
 
     })
