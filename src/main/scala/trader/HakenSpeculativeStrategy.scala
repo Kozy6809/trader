@@ -9,8 +9,10 @@ object HakenSpeculativeStrategy extends Strategy {
   private var status = Status.OUT_THERE
   private var holding = Judgement.STAY
   private var currentHaken: Haken = _
+  private var mostOuterHaken: Haken = _ // ポジションから最も離れたHaken
   private var positionPrice: Price = _
   private var leastProfittablePrice = 0.0
+  private var nearPosition = 0.0 // ポジション価格に近い外側の価格(デフォルトで4tick)
   private var direction = 0 // 予想される値動き。上昇/下降/停滞
   private var positionDirection = 0
   private var prevDirection = 0
@@ -41,14 +43,16 @@ object HakenSpeculativeStrategy extends Strategy {
       case Status.MAY_ENTER =>
         holding = direction2action()
         entryPrice = p
-//        println(holding + " entry at " + entryPrice.askPrice)
+        //        println(holding + " entry at " + entryPrice.askPrice)
         Judgement.STAY
       case Status.ENTRY =>
         Judgement.STAY
       case Status.ENTERED =>
+        mostOuterHaken = currentHaken
         positionPrice = p
         positionDirection = currentHaken.direction
-        leastProfittablePrice = positionPrice.askPrice + 5.0 * positionDirection
+        leastProfittablePrice = positionPrice.askPrice + 10.0 * positionDirection
+        nearPosition = positionPrice.askPrice + 20.0 * positionDirection
         println(holding + " positioned at " + positionPrice.askPrice)
         holding
       case Status.IN_THERE =>
@@ -77,24 +81,23 @@ object HakenSpeculativeStrategy extends Strategy {
     def isMayEnter(p: Price): Boolean = {
       val h = Haken
       val m = Metrics.metrics.head
-      if (h.newHaken) {
+      if (h.varWorstDecline >= 225.0) false
+      else if (h.newHaken) {
         ((m.m5 - m.m20) * direction >= 15.0) ||
-          (h.runlen == 5 && h.stagePenalty(5) >= -4 && (m.m5 - m.m40).abs >= 8.0)
+          (h.runlen == 5 && h.stagePenalty(5) >= -3 && (m.m5 - m.m40).abs >= 10.0)
       } else false
     }
 
     def isMayChange(p: Price): Boolean = {
-      isInner(p.askPrice, innerPrice(currentHaken.p, Settings.hakenDeclineThreshold)) ||
-        (
-          if ((p.askPrice - positionPrice.askPrice) * direction <= 20.0) {
-            isInner(p.askPrice, innerPrice(currentHaken.p, 15.0))
-          } else {
-            isInner(p.askPrice, leastProfittablePrice) ||
-              isInner(p.askPrice, currentHaken.metrics.m40) ||
-              isInner(p.askPrice, currentHaken.metrics.m20) && TechAnal.maDiff()._3.abs < 4.0 // ||
-//            isInner(p.askPrice, innerPrice(currentHaken.p, (currentHaken.p.askPrice - positionPrice.askPrice).abs * 0.5))
-          }
-          )
+      if (isInner(p.askPrice, innerPrice(currentHaken.p, Settings.hakenDeclineThreshold))) true
+      else if (isInner(currentHaken.p.askPrice, nearPosition)) {
+        isInner(p.askPrice, innerPrice(mostOuterHaken.p, 30.0))
+      } else {
+        isInner(p.askPrice, leastProfittablePrice) ||
+          isInner(p.askPrice, currentHaken.metrics.m40) ||
+          isInner(p.askPrice, currentHaken.metrics.m20) && TechAnal.maDiff()._4.abs < 1.5 // ||
+        //            isInner(p.askPrice, innerPrice(currentHaken.p, (currentHaken.p.askPrice - positionPrice.askPrice).abs * 0.5))
+      }
     }
 
     status match {
@@ -103,12 +106,13 @@ object HakenSpeculativeStrategy extends Strategy {
       case Status.MAY_ENTER =>
         Status.ENTRY
       case Status.ENTRY =>
-//        if (p.askPrice != currentHaken.p.askPrice && isInner(p.askPrice, currentHaken.p.askPrice)) Status.ENTERED
-//        else Status.ENTRY
+        //        if (p.askPrice != currentHaken.p.askPrice && isInner(p.askPrice, currentHaken.p.askPrice)) Status.ENTERED
+        //        else Status.ENTRY
         Status.ENTERED
       case Status.ENTERED =>
         Status.IN_THERE
       case Status.IN_THERE =>
+        if (Haken.newHaken && isInner(mostOuterHaken.p.askPrice, currentHaken.p.askPrice)) mostOuterHaken = currentHaken
         if (isMayChange(p)) Status.MAY_CHANGE else Status.IN_THERE
       case Status.MAY_CHANGE =>
         Status.OUT_THERE

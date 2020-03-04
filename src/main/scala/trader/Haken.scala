@@ -16,6 +16,7 @@ object Haken {
   private var prevPrice = 0.0
   private[trader] var newHaken: Boolean = false
   private[trader] var runlen = 0
+  private[trader] var varWorstDecline = 0.0
 
   def reset(): Unit = {
     hakens = List.empty[Haken]
@@ -46,6 +47,7 @@ object Haken {
         }
       }
       hakens = h :: hakens
+      varWorstDecline = varwd()
     } else {
       newHaken = false
       if (hakens.nonEmpty) {
@@ -77,6 +79,21 @@ object Haken {
     }
 
     hakens.take(len).map(stageMap).sum
+  }
+
+  /**
+    * worstDeclineの分散
+    */
+  private def varwd(span: Long = 3600): Double = {
+    val from = hakens.head.p.time.minusSeconds(span)
+    val slice = hakens.takeWhile(h => h.p.time.isAfter(from))
+    val n = slice.length
+    if (n == 1) 0.0
+    else {
+      val wd = slice.map(h => h.worstDecline)
+      val mean = wd.sum / n
+      wd.map(w => (w - mean) * (w - mean)).sum / (n - 1)
+    }
   }
 
   def save(append: Boolean = true): Unit = {
