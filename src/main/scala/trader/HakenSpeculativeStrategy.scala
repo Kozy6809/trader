@@ -83,20 +83,24 @@ object HakenSpeculativeStrategy extends Strategy {
       val m = Metrics.metrics.head
       if (h.varWorstDecline >= 225.0) false
       else if (h.newHaken) {
-        ((m.m5 - m.m20) * direction >= 15.0) ||
-          (h.runlen == 5 && h.stagePenalty(5) >= -3 && (m.m5 - m.m40).abs >= 10.0)
+        val stg = currentHaken.metrics.stage
+        ((direction > 0 && (stg == 6 || stg == 1)) || (direction < 0 && stg == 3 || stg == 4)) &&
+        ((m.m5 - m.m20).abs + (m.m20 - m.m40).abs >= 5.0)
       } else false
     }
 
     def isMayChange(p: Price): Boolean = {
-      if (isInner(p.askPrice, innerPrice(currentHaken.p, Settings.hakenDeclineThreshold))) true
-      else if (isInner(currentHaken.p.askPrice, nearPosition)) {
-        isInner(p.askPrice, innerPrice(mostOuterHaken.p, 30.0))
-      } else {
-        isInner(p.askPrice, leastProfittablePrice) ||
-          isInner(p.askPrice, currentHaken.metrics.m40) ||
-          isInner(p.askPrice, currentHaken.metrics.m20) && TechAnal.maDiff()._4.abs < 1.5 // ||
-        //            isInner(p.askPrice, innerPrice(currentHaken.p, (currentHaken.p.askPrice - positionPrice.askPrice).abs * 0.5))
+      if (isInner(p.askPrice, innerPrice(positionPrice, Settings.hakenDeclineThreshold))) true
+      else {
+        if (Haken.newHaken) {
+          val stg = currentHaken.metrics.stage
+          (positionDirection > 0 && (stg != 1 && stg != 2)) ||
+            (positionDirection < 0 && (stg != 4 && stg != 5))
+        } else {
+          false
+          //          isInner(p.askPrice, currentHaken.metrics.m40) ||
+          //          (isInner(p.askPrice, currentHaken.metrics.m20) && TechAnal.maDiff()._4.abs < 1.5)
+        }
       }
     }
 
