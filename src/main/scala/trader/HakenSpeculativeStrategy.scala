@@ -90,12 +90,13 @@ object HakenSpeculativeStrategy extends Strategy {
     }
 
     def isMayChange(p: Price): Boolean = {
-      if (isInner(p.askPrice, innerPrice(positionPrice, Settings.hakenDeclineThreshold))) true
-      else {
+      if (isInner(p.askPrice, innerPrice(positionPrice, Settings.hakenDeclineThreshold))) {
+        true
+      } else {
         if (Haken.newHaken) {
           val stg = currentHaken.metrics.stage
-          (positionDirection > 0 && (stg != 1 && stg != 2)) ||
-            (positionDirection < 0 && (stg != 4 && stg != 5))
+            (positionDirection > 0 && (stg != 6 && stg != 1 && stg != 2)) ||
+            (positionDirection < 0 && (stg != 3 && stg != 4 && stg != 5))
         } else {
           false
           //          isInner(p.askPrice, currentHaken.metrics.m40) ||

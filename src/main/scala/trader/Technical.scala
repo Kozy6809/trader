@@ -189,7 +189,7 @@ object Technical {
     TechAnal.replay(path)
 //    Haken.save()
 //    TechAnal.save()
-    replayShowPrices()
+//    replayShowPrices()
 //    TechAnal.savePeaks()
 //    TechAnal.saveSlides("slides")
     StockLogger.close()

@@ -8,12 +8,15 @@ class Haken(val metrics: Metrics) {
   var direction = 0 // 値動きの方向
   var lapsTime: Long = -1L // 前回のHakenからの経過時間。前回が存在しない場合は-1
   var worstDecline = 0.0 // 次のHakenが出現するまでの最悪低下幅
+  var stageCount = 0 // Haken間のステージ切り替わり回数
 }
 
 object Haken {
   private val thres = Settings.hakenThreshold
   private[trader] var hakens = List.empty[Haken]
   private var prevPrice = 0.0
+  private var prevStage = 0
+  private var stageCount = 0
   private[trader] var newHaken: Boolean = false
   private[trader] var runlen = 0
   private[trader] var varWorstDecline = 0.0
@@ -31,12 +34,18 @@ object Haken {
     val m = metrics.head
     val p = m.data.head
 
+    if (m.stage != prevStage) {
+      stageCount += 1
+      prevStage = m.stage
+    }
     val itvl = TechAnal.registerPrice(p.askPrice, p.time)
     if (itvl > thres) {
       if (hakens.nonEmpty) newHaken = true
       val lapsTime = if (hakens.isEmpty) Long.MaxValue
       else hakens.head.metrics.data.head.time.until(p.time, ChronoUnit.SECONDS)
       val h = new Haken(m)
+      h.stageCount = stageCount
+      stageCount = 0
       runlen += 1
       h.lapsTime = if (lapsTime > thres) -1L else lapsTime
       if (prevPrice != 0.0) {
@@ -108,7 +117,7 @@ object Haken {
       writer.print(h.worstDecline +"\t")
       writer.print(List(f"${m.amtrate}%.1f", f"${m.m5}%.1f", f"${m.m10}%.1f", f"${m.m20}%.1f", f"${m.m40}%.1f",
         f"${m.m5 - m.m20}%.1f", f"${m.m20 - m.m40}%.1f").mkString("\t"))
-      writer.println("\t"+ m.stage)
+      writer.println("\t"+ m.stage +"\t"+ h.stageCount)
 
     })
     writer.close()
