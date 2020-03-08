@@ -21,6 +21,12 @@ class Metrics(val data: List[Price], val slides: List[SlidingWindow]) {
   private[trader] def m20 = mas(2)
   private[trader] def m40 = mas(3)
   private[trader] def maRange: Double = mas.max - mas.min
+  private[trader] def rangeDistance(p: Double): Double = {
+    val u = mas.max
+    val l = mas.min
+    if (p > l && p < u) 0.0
+    else Math.min((p - u).abs, (p - l).abs)
+  }
   private[trader] val stage = if (m5 >= m20 && m20 >= m40) 1
   else if (m20 >= m5 && m5 >= m40) 2
   else if (m20 >= m40 && m40 >= m5) 3

@@ -9,6 +9,7 @@ class Haken(val metrics: Metrics) {
   var lapsTime: Long = -1L // 前回のHakenからの経過時間。前回が存在しない場合は-1
   var worstDecline = 0.0 // 次のHakenが出現するまでの最悪低下幅
   var stageCount = 0 // Haken間のステージ切り替わり回数
+  var rangeDistance = 0.0 // askPriceのma範囲からの距離
 }
 
 object Haken {
@@ -46,8 +47,13 @@ object Haken {
       val h = new Haken(m)
       h.stageCount = stageCount
       stageCount = 0
+
+      h.rangeDistance = h.metrics.rangeDistance(h.p.askPrice)
+
+      h.lapsTime = lapsTime // if (lapsTime > thres) -1L else lapsTime
+
       runlen += 1
-      h.lapsTime = if (lapsTime > thres) -1L else lapsTime
+
       if (prevPrice != 0.0) {
         h.direction = (p.askPrice - prevPrice).signum
         if (h.direction != hakens.head.direction) {
@@ -78,11 +84,11 @@ object Haken {
       val stage = h.metrics.stage
       if (h.direction >= 0) {
         if (stage == 4) -2
-        else if (stage == 3 || stage == 5) -1
+        else if (stage == 3) -1
         else 0
       } else {
         if (stage == 1) -2
-        else if (stage == 6 || stage == 2) -1
+        else if (stage == 6) -1
         else 0
       }
     }
@@ -93,7 +99,7 @@ object Haken {
   /**
     * worstDeclineの分散
     */
-  private def varwd(span: Long = 3600): Double = {
+  private def varwd(span: Long = 1800): Double = {
     val from = hakens.head.p.time.minusSeconds(span)
     val slice = hakens.takeWhile(h => h.p.time.isAfter(from))
     val n = slice.length
@@ -117,7 +123,7 @@ object Haken {
       writer.print(h.worstDecline +"\t")
       writer.print(List(f"${m.amtrate}%.1f", f"${m.m5}%.1f", f"${m.m10}%.1f", f"${m.m20}%.1f", f"${m.m40}%.1f",
         f"${m.m5 - m.m20}%.1f", f"${m.m20 - m.m40}%.1f").mkString("\t"))
-      writer.println("\t"+ m.stage +"\t"+ h.stageCount)
+      writer.println("\t"+ m.stage +"\t"+ f"${h.rangeDistance}%.1f")
 
     })
     writer.close()
