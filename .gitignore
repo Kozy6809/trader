@@ -5,6 +5,7 @@
 ScreenProcessor.scala_
 techs*
 slides*
+.RData
 .Rproj.user
 hakens
 hakens_
