@@ -186,6 +186,7 @@ object Technical {
   def replay(fileName: String): Unit = {
     PriceWindow.init()
     val path = Paths.get(fileName)
+    Settings.showPrices = true
     TechAnal.replay(path)
 //    Haken.save()
 //    TechAnal.save()

@@ -16,7 +16,6 @@ object TechAnal {
   var data = List.empty[Price]
   var slidingMetrics = List.empty[Metrics]
   var slides = List.empty[SlidingWindow]
-  var replayMode = false
   var peaks = List.empty[(Int, Int)] // 直近のピーク位置, ピークをピークと認識した位置。Listの末尾からのインデックスなので要注意
   var upeaks = List.empty[(Int, Int)] // 上に凸なピーク
   var lpeaks = List.empty[(Int, Int)] // 下に凸なピーク
@@ -30,14 +29,12 @@ object TechAnal {
   private var priceOccurrence = scala.collection.mutable.Map.empty[Double, LocalDateTime]
   private var currentOccurrence = -1.0 // 最新の登録価格値
   private var hakenCount = 0
-  private var showPrice = false
 
   def reset(): Unit = {
     data = List.empty[Price]
     SlidingWindow.reset()
     Metrics.reset()
     Haken.reset()
-    replayMode = false
     peaks = List.empty[(Int, Int)] // 直近のピーク位置, ピークをピークと認識した位置。Listの末尾からのインデックスなので要注意
     upeaks = List.empty[(Int, Int)] // 上に凸なピーク
     lpeaks = List.empty[(Int, Int)] // 下に凸なピーク
@@ -52,7 +49,7 @@ object TechAnal {
   }
 
   def add(p: Price): Boolean = {
-    if (!replayMode) handleStall()
+    if (!Settings.replaymode) handleStall()
 
     val amt = if (data.length <= 1) 1 else data.head.amt - data(1).amt
     // 出来高が前回と同じなら記録しない
@@ -64,7 +61,7 @@ object TechAnal {
       Haken.add(Metrics.metrics)
       StrategyEvaluator.add(p)
       Technical.showPrices(data)
-      if (replayMode && showPrice) {
+      if (Settings.replaymode && Settings.showPrices) {
         hakenCount -= 100
         if (Haken.newHaken) hakenCount = 1000
         if (hakenCount < 20) hakenCount = 20
@@ -310,8 +307,7 @@ object TechAnal {
     * データファイルを読み込み、セッションを再現する。データは先頭の方が新しいので、逆順で処理する
     * 古いデータを読ませた時は売り気配値が無いことを識別して、売り気配値に0.0をセットする
     */
-  def replay(src: Path, showPrice: Boolean = false): Unit = {
-    replayMode = true
+  def replay(src: Path): Unit = {
     val ps = new ListBuffer[Price]
 
     object Proc extends Consumer[String] {
