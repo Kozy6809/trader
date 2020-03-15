@@ -8,29 +8,31 @@ import javax.swing._
 object PriceWindow extends JFrame {
   private val w = 256
   private val h = 300
-  private val hcenter = h / 2
+  private def hcenter: Int = PricePanel.getHeight / 2
+  private var centerPrice = 0.0
   private val scaleFactor = 2.0 // pixel / yen
   // 基本的に価格の縦位置は固定だが、価格が変化した時だけ位置を変え、徐々に元の位置に戻すようにする
-  private var yPriceOffset = 0 // 価格縦位置のオフセット
   private var yoffset = 0
   private var yprice = hcenter
-  private var ym320 = hcenter
-  private var ym640 = hcenter
-  private var ym1280 = hcenter
-  private var ym2560 = hcenter
-  private var ydiffm320 = 0
-  private var ydiffm640 = 0
-  private var ydiffm1280 = 0
-  private var ydiffm2560 = 0
+  private var ym5 = hcenter
+  private var ym10 = hcenter
+  private var ym20 = hcenter
+  private var ym40 = hcenter
+  private var haken = 0.0
+  private var yhaken = 0
+  private var ydiffm5 = 0
+  private var ydiffm10 = 0
+  private var ydiffm20 = 0
+  private var ydiffm40 = 0
   private var strprice = ""
-  private var strm320 = ""
-  private var strm640 = ""
-  private var strm1280 = ""
-  private var strm2560 = ""
-  private var strdiffm320 = ""
-  private var strdiffm640 = ""
-  private var strdiffm1280 = ""
-  private var strdiffm2560 = ""
+  private var strm5 = ""
+  private var strm10 = ""
+  private var strm20 = ""
+  private var strm40 = ""
+  private var strdiffm5 = ""
+  private var strdiffm10 = ""
+  private var strdiffm20 = ""
+  private var strdiffm40 = ""
   private var stramtrate = "0"
   private var strdiffamt = "0"
   private var strtime = ""
@@ -47,51 +49,50 @@ object PriceWindow extends JFrame {
 
   def setData(time: LocalDateTime,
                price: Double, prevPrice: Double,
-              m320: Double, m640: Double, m1280: Double, m2560: Double,
-              diffm320: Double, diffm640: Double, diffm1280: Double, diffm2560: Double,
+              m5: Double, m10: Double, m20: Double, m40: Double,
+              diffm5: Double, diffm10: Double, diffm20: Double, diffm40: Double,
               amtrate: Double, diffamt: Int,
              rangemin: Double, rangemax: Double): Unit = {
 
-    def toYpos(d: Double): Int = hcenter - ((d - price) * scaleFactor).round.toInt
+    if (centerPrice == 0.0) centerPrice = price
+    if (Haken.newHaken) haken = Haken.hakens.head.p.askPrice
+
+    def toYpos(d: Double): Int = hcenter - ((d - centerPrice) * scaleFactor).round.toInt
     yprice = toYpos(price)
-    ym320 = toYpos(m320)
-    ym640 = toYpos(m640)
-    ym1280 = toYpos(m1280)
-    ym2560 = toYpos(m2560)
+    ym5 = toYpos(m5)
+    ym10 = toYpos(m10)
+    ym20 = toYpos(m20)
+    ym40 = toYpos(m40)
     yrangemin = toYpos(rangemin)
     yrangemax = toYpos(rangemax)
+    yhaken = if (haken > 0.0) toYpos(haken) else hcenter
 
     def diff2Ylen(d: Double): Int = (d * 5 * scaleFactor).round.toInt
 
-    ydiffm320 = diff2Ylen(diffm320)
-    ydiffm640 = diff2Ylen(diffm640)
-    ydiffm1280 = diff2Ylen(diffm1280)
-    ydiffm2560 = diff2Ylen(diffm2560)
+    ydiffm5 = diff2Ylen(diffm5)
+    ydiffm10 = diff2Ylen(diffm10)
+    ydiffm20 = diff2Ylen(diffm20)
+    ydiffm40 = diff2Ylen(diffm40)
 
     def d2s(d: Double): String = d.round.toString
 
     strprice = d2s(price)
-    strm320 = d2s(m320)
-    strm640 = d2s(m640)
-    strm1280 = d2s(m1280)
-    strm2560 = d2s(m2560)
-    strdiffm320 = d2s(diffm320 * 10)
-    strdiffm640 = d2s(diffm640 * 10)
-    strdiffm1280 = d2s(diffm1280 * 10)
-    strdiffm2560 = d2s(diffm2560 * 10)
+    strm5 = d2s(m5)
+    strm10 = d2s(m10)
+    strm20 = d2s(m20)
+    strm40 = d2s(m40)
+    strdiffm5 = d2s(diffm5 * 10)
+    strdiffm10 = d2s(diffm10 * 10)
+    strdiffm20 = d2s(diffm20 * 10)
+    strdiffm40 = d2s(diffm40 * 10)
     stramtrate = d2s(amtrate)
     strdiffamt = diffamt.toString
     strtime = time.toString
-    yPriceOffset -= ((price - prevPrice) * scaleFactor).toInt
-    yPriceOffset = Math.max(yPriceOffset, 10 - hcenter)
-    yPriceOffset = Math.min(yPriceOffset, hcenter)
 
-    def range(l: List[Int]): (Int, Int) = (l.min, l.max)
-
-    val r = range(List(yPriceOffset + hcenter, ym320, ym640, ym1280, ym2560))
-    yoffset = if (r._1 < 0) yPriceOffset - r._1 else if (r._2 > h)
-      yPriceOffset - (r._2 - h) else
-      yPriceOffset
+    yoffset = if (yprice <= 10) -yprice + 10
+    else if (yprice >= hcenter * 2 - 10) (hcenter * 2 - 10) - yprice
+    else 0
+    centerPrice = centerPrice + yoffset.toDouble / scaleFactor
   }
 
   object PricePanel extends JPanel {
@@ -102,32 +103,34 @@ object PriceWindow extends JFrame {
       def x(n: Int): Int = xwidth * n + xorg
       super.paint(g)
       g.setColor(java.awt.Color.black)
-      g.drawLine(x(0), hcenter + yoffset, x(1), ym320 + yoffset)
-      g.drawLine(x(1), ym320 + yoffset, x(2), ym640 + yoffset)
-      g.drawLine(x(2), ym640 + yoffset, x(3), ym1280 + yoffset)
-      g.drawLine(x(3), ym1280 + yoffset, x(4), ym2560 + yoffset)
+      g.drawLine(x(0), yprice + yoffset, x(1), ym5 + yoffset)
+      g.drawLine(x(1), ym5 + yoffset, x(2), ym10 + yoffset)
+      g.drawLine(x(2), ym10 + yoffset, x(3), ym20 + yoffset)
+      g.drawLine(x(3), ym20 + yoffset, x(4), ym40 + yoffset)
 
-      g.drawLine(x(1), ym320 + yoffset, x(1), ym320 + yoffset - ydiffm320)
-      g.drawLine(x(2), ym640 + yoffset, x(2), ym640 + yoffset - ydiffm640)
-      g.drawLine(x(3), ym1280 + yoffset, x(3), ym1280 + yoffset - ydiffm1280)
-      g.drawLine(x(4), ym2560 + yoffset, x(4), ym2560 + yoffset - ydiffm2560)
+      g.drawLine(x(1), ym5 + yoffset, x(1), ym5 + yoffset - ydiffm5)
+      g.drawLine(x(2), ym10 + yoffset, x(2), ym10 + yoffset - ydiffm10)
+      g.drawLine(x(3), ym20 + yoffset, x(3), ym20 + yoffset - ydiffm20)
+      g.drawLine(x(4), ym40 + yoffset, x(4), ym40 + yoffset - ydiffm40)
 
-      g.drawString(strprice, x(0), hcenter + yoffset)
-      g.drawString(strm320, x(1), ym320 + yoffset)
-      g.drawString(strdiffm320, x(1), ym320 + yoffset + 10)
-      g.drawString(strm640, x(2), ym640 + yoffset)
-      g.drawString(strdiffm640, x(2), ym640 + yoffset + 10)
-      g.drawString(strm1280, x(3), ym1280 + yoffset)
-      g.drawString(strdiffm1280, x(3), ym1280 + yoffset + 10)
-      g.drawString(strm2560, x(4), ym2560 + yoffset)
-      g.drawString(strdiffm2560, x(4), ym2560 + yoffset + 10)
-      g.drawString(stramtrate, 5, hcenter + yoffset)
-      g.drawString(strdiffamt, 5, hcenter + yoffset + 10)
+      g.drawString(strprice, x(0), yprice + yoffset)
+      g.drawString(strm5, x(1), ym5 + yoffset)
+      g.drawString(strdiffm5, x(1), ym5 + yoffset + 10)
+      g.drawString(strm10, x(2), ym10 + yoffset)
+      g.drawString(strdiffm10, x(2), ym10 + yoffset + 10)
+      g.drawString(strm20, x(3), ym20 + yoffset)
+      g.drawString(strdiffm20, x(3), ym20 + yoffset + 10)
+      g.drawString(strm40, x(4), ym40 + yoffset)
+      g.drawString(strdiffm40, x(4), ym40 + yoffset + 10)
+      g.drawString(stramtrate, 5, yprice + yoffset)
+      g.drawString(strdiffamt, 5, yprice + yoffset + 10)
       g.drawString(strtime, x(1), 10)
 
       g.setColor(java.awt.Color.red)
       g.drawLine(0, yrangemin + yoffset, w, yrangemin + yoffset)
       g.drawLine(0, yrangemax + yoffset, w, yrangemax + yoffset)
+      g.setColor(java.awt.Color.blue)
+      g.drawLine(0, yhaken + yoffset, w, yhaken + yoffset)
     }
   }
 }

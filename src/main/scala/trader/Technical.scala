@@ -141,7 +141,6 @@ object Technical {
         val p = handler.acquirePrice()
         if (TechAnal.add(p)) {
           printPrices(p)
-          showPrices()
         }
         Thread.sleep(1000) // 間隔が短いとbangされる
       } catch {
@@ -151,7 +150,7 @@ object Technical {
   }
 
   def showPrices(data: List[Price] = TechAnal.data, metrics: List[Metrics] = Metrics.metrics, srange: (Double, Double) = SlidingWindow.range) :Unit = {
-    println(srange)
+    if (!Settings.replaymode) println(srange)
     val p = data.head
     val prev = if (data.size > 1) data(1) else p
     val m = metrics.head
@@ -185,11 +184,11 @@ object Technical {
   }
 
   def replay(fileName: String): Unit = {
+    PriceWindow.init()
     val path = Paths.get(fileName)
     TechAnal.replay(path)
 //    Haken.save()
 //    TechAnal.save()
-//    replayShowPrices()
 //    TechAnal.savePeaks()
 //    TechAnal.saveSlides("slides")
     StockLogger.close()
