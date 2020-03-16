@@ -29,6 +29,8 @@ object TechAnal {
   private var priceOccurrence = scala.collection.mutable.Map.empty[Double, LocalDateTime]
   private var currentOccurrence = -1.0 // 最新の登録価格値
   private var hakenCount = 0
+  private var amt = 0
+  private var amtcount = 0
 
   def reset(): Unit = {
     data = List.empty[Price]
@@ -283,24 +285,21 @@ object TechAnal {
     * 対策として、この状態になったらドライバーをクローズしてログインからやりなおす
     */
   def handleStall(): Unit = {
-    val now = LocalDateTime.now()
-    val prev = now.minusSeconds(60)
-
-    // 60秒以上データが止まったらストールとみなす。
-    // ただしエラーでログインに時間がかかった場合を考慮し、ログイン時刻の方がデータより新しいならストールとみなさない
-    if (data.nonEmpty && data.head.time.compareTo(prev) < 0 && SBIFutureHandler.loginTime.compareTo(data.head.time) < 0) {
-
-      // ただし、15:10-16:30と、05:25-08:45の間はストールとみなさない
-      val nowTime = now.toLocalTime
-      if ((nowTime.compareTo(LocalTime.of(8, 45)) > 0 && nowTime.compareTo(LocalTime.of(15, 10)) < 0) ||
-        nowTime.compareTo(LocalTime.of(16, 30)) > 0 ||
-        nowTime.compareTo(LocalTime.of(5, 25)) < 0) {
-        StockLogger.writeMessage("Stall detected. attempt to re-login")
-        SBIFutureHandler.close()
-        SBIFutureHandler.login()
+    if (data.nonEmpty) {
+      if (amt != data.head.amt) {
+        amt = data.head.amt
+        amtcount = 0
+      } else {
+        amtcount += 1
       }
-
     }
+    if (amtcount > 60) {
+      amtcount = 0
+      StockLogger.writeMessage("Stall detected. attempt to re-login")
+      SBIFutureHandler.close()
+      SBIFutureHandler.login()
+    }
+
   }
 
   /**
