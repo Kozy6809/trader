@@ -2,7 +2,7 @@ package trader
 
 import java.time.LocalDateTime
 
-class SlidingWindow(val data: List[Price]) {
+class SlidingWindow(val data: List[Price], val metrics: List[Metrics]) {
   private val limit = 5
   private var prices = scala.collection.mutable.Map.empty[Double, Int]
   prices.put(round5(data.head.askPrice), diffAmt(data))
@@ -53,7 +53,7 @@ object SlidingWindow {
     */
   def add(data: List[Price]): Boolean = {
     if (slides.isEmpty || !slides.head.add(data)) {
-      slides = new SlidingWindow(data) :: slides
+      slides = new SlidingWindow(data, Metrics.metrics) :: slides
       range = calcRange()
       false
     } else true
