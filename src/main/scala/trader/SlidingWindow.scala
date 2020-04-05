@@ -4,7 +4,7 @@ import java.time.LocalDateTime
 
 class SlidingWindow(val data: List[Price], val metrics: List[Metrics]) {
   private val limit = 5
-  private var prices = scala.collection.mutable.Map.empty[Double, Int]
+  private val prices = scala.collection.mutable.Map.empty[Double, Int]
   prices.put(round5(data.head.askPrice), diffAmt(data))
 
   def max: Double = prices.keys.max
@@ -46,6 +46,7 @@ class SlidingWindow(val data: List[Price], val metrics: List[Metrics]) {
 object SlidingWindow {
   var slides = List.empty[SlidingWindow]
   var range: (Double, Double) = (0.0, 0.0)
+  var newSlide = false
 
   /**
     * 与えられた価格が現在のウィンドウで保持できるならウィンドウに付加してtrueを返す
@@ -55,8 +56,9 @@ object SlidingWindow {
     if (slides.isEmpty || !slides.head.add(data)) {
       slides = new SlidingWindow(data, Metrics.metrics) :: slides
       range = calcRange()
-      false
-    } else true
+      newSlide = true
+    } else newSlide = false
+    !newSlide
   }
 
   def reset(): Unit = slides = List.empty[SlidingWindow]
