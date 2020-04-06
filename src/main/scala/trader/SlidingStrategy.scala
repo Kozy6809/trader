@@ -90,7 +90,11 @@ object SlidingStrategy extends Strategy {
         val s1 = SlidingWindow.slides(1).data.head.askPrice
         val di5 = s0 - m0.m5
         val dm5 = m0.m5 - m1.m5
-        (dm5.abs > 1 && (s0 - s1).signum == di5.signum && di5.signum == dm5.signum && (di5 + dm5).abs > 15.0)
+        val stg = Metrics.metrics.head.stage
+        if (dm5.abs > 1 && (s0 - s1).signum == di5.signum && di5.signum == dm5.signum
+          && (di5 + dm5).abs > 15.0) {
+          if  ((di5 < 0 && stg != 1) || (di5 > 0 && stg != 4)) true else false
+        } else false
       } else false
     }
 
