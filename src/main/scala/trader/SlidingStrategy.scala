@@ -81,25 +81,39 @@ object SlidingStrategy extends Strategy {
   private def laps(from: Price, to: Price): Long = from.time.until(to.time, ChronoUnit.SECONDS)
 
   private def analyze(p: Price): Status.Value = {
+    def m(ix: Int) = SlidingWindow.slides(ix).metrics.head
+    def s(ix: Int) = SlidingWindow.slides(ix).data.head.askPrice
 
     def isMayEnter(p: Price): Boolean = {
       if (SlidingWindow.newSlide && runSlide >= 2) {
-        val m0 = Metrics.metrics.head
-        val m1 = Metrics.metrics(1)
-        val s0 = SlidingWindow.slides.head.data.head.askPrice
-        val s1 = SlidingWindow.slides(1).data.head.askPrice
+        val m0 = m(0)
+        val m1 = m(1)
+        val s0 = s(0)
+        val s1 = s(1)
         val di5 = s0 - m0.m5
         val dm5 = m0.m5 - m1.m5
         val stg = Metrics.metrics.head.stage
         if (dm5.abs > 1 && (s0 - s1).signum == di5.signum && di5.signum == dm5.signum
           && (di5 + dm5).abs > 15.0) {
-          if  ((di5 < 0 && stg != 1) || (di5 > 0 && stg != 4)) true else false
+          if  ((di5 < 0 && stg != 1) || (di5 > 0 && stg != 4)) {
+            positionDirection = di5.signum
+            true
+          } else false
         } else false
       } else false
     }
 
     def isMayChange(p: Price): Boolean = {
-      false
+      if (SlidingWindow.newSlide) {
+        if (direction == positionDirection) false
+        else {
+          if (runSlide > 1) true
+          else {
+            false
+          }
+        }
+      } else false
+
     }
 
     status match {
