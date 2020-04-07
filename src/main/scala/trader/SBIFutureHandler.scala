@@ -59,82 +59,108 @@ object SBIFutureHandler {
   }
 
   def login(): Unit = {
-    genDriver()
-    StockLogger.writeMessage("attempt to login")
-    // ログイン画面にアクセス
-    driver.get("https://www.sbisec.co.jp/ETGate/?OutSide=on&_ControlID=WPLETsmR001Control&_DataStoreID=DSWPLETsmR001Control&sw_page=Future&cat1=home&cat2=none&getFlg=on")
-    // ID入力
-    driver.findElement(By.name("user_id")).sendKeys(Settings.id)
-    // パスワード入力
-    driver.findElement(By.name("user_password")).sendKeys(Settings.pwd)
-    // ログインボタンクリック
-    val login = driver.findElement(By.name("ACT_login"))
-    val wait = new WebDriverWait(driver, Duration.ofSeconds(60))
-    wait.until(ExpectedConditions.elementToBeClickable(login))
-    // ポップアップでクリックボタンが押せない時、ポップアップが消えるのを待つ
-    var done = false
-    while (!done) {
-      try {
-        login.click()
-        done = true
-      } catch {
-        case e: Exception =>
-          StockLogger.writeMessage("login failed. retrying click.")
-          Thread.sleep(1000)
-      }
+    object  Status extends Enumeration {
+      val LOGIN_INITIAL, LOGIN_CONT, MAIN, PRICEBOARD, CONTENTSFRAME, DONE = Value
     }
+    import Status._
+    var status = LOGIN_INITIAL
 
-    try {
-      wait.until(ExpectedConditions.visibilityOfElementLocated(By.name("main")))
-    } catch {
-      case e: Exception =>
-        StockLogger.writeMessage("メイン画面が表示されません。重要なお知らせをチェックします")
+    val wait = new WebDriverWait(driver, Duration.ofSeconds(60))
+    def doLogin(): Unit = {
+      genDriver()
+      StockLogger.writeMessage("attempt to login")
+      // ログイン画面にアクセス
+      driver.get("https://www.sbisec.co.jp/ETGate/?OutSide=on&_ControlID=WPLETsmR001Control&_DataStoreID=DSWPLETsmR001Control&sw_page=Future&cat1=home&cat2=none&getFlg=on")
+      // ID入力
+      driver.findElement(By.name("user_id")).sendKeys(Settings.id)
+      // パスワード入力
+      driver.findElement(By.name("user_password")).sendKeys(Settings.pwd)
+      // ログインボタンクリック
+      val login = driver.findElement(By.name("ACT_login"))
+      wait.until(ExpectedConditions.elementToBeClickable(login))
+      // ポップアップでクリックボタンが押せない時、ポップアップが消えるのを待つ
+      var done = false
+      while (!done) {
         try {
-          clearAcknowledge()
-          wait.until(ExpectedConditions.visibilityOfElementLocated(By.name("main")))
+          login.click()
+          done = true
         } catch {
           case e: Exception =>
-            StockLogger.writeMessage("想定外のエラーです")
-            // 建玉が残っていればここで決済したいところだが、その術がない。携帯にアラートを送付するか
-            close()
-            System.exit(1)
+            StockLogger.writeMessage("login failed. retrying click.")
+            Thread.sleep(1000)
         }
+      }
+      status = MAIN
     }
-    println(driver.getTitle)
 
-    StockLogger.writeMessage("login done")
-    loginTime = LocalDateTime.now()
+    def doLoginContinuous(): Unit = {
+      genDriver()
+      StockLogger.writeMessage("attempt to login")
+      // ログイン画面にアクセス
+      driver.get("https://www.sbisec.co.jp/ETGate/?OutSide=on&_ControlID=WPLETsmR001Control&_DataStoreID=DSWPLETsmR001Control&sw_page=Future&cat1=home&cat2=none&getFlg=on")
+      status = MAIN
+    }
 
-    done = false
-    while (!done) {
+    def doMain(): Unit = {
+      try {
+        wait.until(ExpectedConditions.visibilityOfElementLocated(By.name("main")))
+        status = PRICEBOARD
+      } catch {
+        case e: Exception =>
+          StockLogger.writeMessage("メイン画面が表示されません。重要なお知らせをチェックします")
+          try {
+            clearAcknowledge()
+            wait.until(ExpectedConditions.visibilityOfElementLocated(By.name("main")))
+            status = PRICEBOARD
+          } catch {
+            case e: Exception =>
+              StockLogger.writeMessage("想定外のエラーです")
+              // 建玉が残っていればここで決済したいところだが、その術がない。携帯にアラートを送付するか
+              close()
+              System.exit(1)
+          }
+      }
+      println(driver.getTitle)
+      StockLogger.writeMessage("login done")
+      loginTime = LocalDateTime.now()
+      status = PRICEBOARD
+    }
+
+    def doPriceBoard(): Unit = {
       try {
         priceBoard()
         StockLogger.writeMessage("price board displayed")
-        done = true
+        status = CONTENTSFRAME
       } catch {
         case e: Exception =>
           StockLogger.writeMessage("can't display price board")
           close()
-          genDriver()
-          // ログイン画面にアクセス
-          driver.get("https://www.sbisec.co.jp/ETGate/?OutSide=on&_ControlID=WPLETsmR001Control&_DataStoreID=DSWPLETsmR001Control&sw_page=Future&cat1=home&cat2=none&getFlg=on")
-          wait.until(ExpectedConditions.visibilityOfElementLocated(By.name("main")))
+          status = LOGIN_CONT
       }
     }
 
-    try {
-      showContentsFrame(0)
-    } catch {
-      case e: Exception =>
-        StockLogger.writeMessage(e.getMessage)
-        close()
-        genDriver()
-        driver.get("https://www.sbisec.co.jp/ETGate/?OutSide=on&_ControlID=WPLETsmR001Control&_DataStoreID=DSWPLETsmR001Control&sw_page=Future&cat1=home&cat2=none&getFlg=on")
-        wait.until(ExpectedConditions.visibilityOfElementLocated(By.name("main")))
-        priceBoard()
+    def doContentsFrame(): Unit = {
+      try {
         showContentsFrame(0)
+        StockLogger.writeMessage("new SELL screen displayed")
+        status = DONE
+      } catch {
+        case e: Exception =>
+          StockLogger.writeMessage(e.getMessage)
+          close()
+          status = LOGIN_CONT
+      }
     }
-    StockLogger.writeMessage("new SELL screen displayed")
+
+    while (status != DONE) {
+      status match {
+        case LOGIN_INITIAL => doLogin()
+        case LOGIN_CONT => doLoginContinuous()
+        case MAIN => doMain()
+        case PRICEBOARD => doPriceBoard()
+        case CONTENTSFRAME => doContentsFrame()
+      }
+    }
   }
 
   def priceBoard(): Unit = {
