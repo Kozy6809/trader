@@ -65,10 +65,10 @@ object SBIFutureHandler {
     import Status._
     var status = LOGIN_INITIAL
 
-    val wait = new WebDriverWait(driver, Duration.ofSeconds(60))
     def doLogin(): Unit = {
       genDriver()
-      StockLogger.writeMessage("attempt to login")
+      val wait = new WebDriverWait(driver, Duration.ofSeconds(60))
+      StockLogger.writeMessage("attempt to initial login")
       // ログイン画面にアクセス
       driver.get("https://www.sbisec.co.jp/ETGate/?OutSide=on&_ControlID=WPLETsmR001Control&_DataStoreID=DSWPLETsmR001Control&sw_page=Future&cat1=home&cat2=none&getFlg=on")
       // ID入力
@@ -90,11 +90,13 @@ object SBIFutureHandler {
             Thread.sleep(1000)
         }
       }
+      StockLogger.writeMessage("login done. wait for main view")
       status = MAIN
     }
 
     def doLoginContinuous(): Unit = {
       genDriver()
+      val wait = new WebDriverWait(driver, Duration.ofSeconds(60))
       StockLogger.writeMessage("attempt to login")
       // ログイン画面にアクセス
       driver.get("https://www.sbisec.co.jp/ETGate/?OutSide=on&_ControlID=WPLETsmR001Control&_DataStoreID=DSWPLETsmR001Control&sw_page=Future&cat1=home&cat2=none&getFlg=on")
@@ -102,11 +104,15 @@ object SBIFutureHandler {
     }
 
     def doMain(): Unit = {
+      println(driver.getTitle)
+      val wait = new WebDriverWait(driver, Duration.ofSeconds(60))
       try {
+        StockLogger.writeMessage("waiting main view")
         wait.until(ExpectedConditions.visibilityOfElementLocated(By.name("main")))
         status = PRICEBOARD
       } catch {
         case e: Exception =>
+          StockLogger.writeMessage(e.getMessage)
           StockLogger.writeMessage("メイン画面が表示されません。重要なお知らせをチェックします")
           try {
             clearAcknowledge()
