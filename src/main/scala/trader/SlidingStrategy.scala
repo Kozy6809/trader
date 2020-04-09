@@ -97,6 +97,7 @@ object SlidingStrategy extends Strategy {
           && (di5 + dm5).abs > 15.0) {
           if  ((di5 < 0 && stg != 1) || (di5 > 0 && stg != 4)) {
             positionDirection = di5.signum
+            direction = positionDirection
             true
           } else false
         } else false

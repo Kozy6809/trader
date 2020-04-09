@@ -1,7 +1,7 @@
 package trader
 
 object StrategyEvaluator extends Strategy {
-  val s:Strategy = HakenTanglingStrategy
+  val s:Strategy = SlidingStrategy
   var holding: Judgement.Value = Judgement.STAY
   var price = 0.0 // 建玉の価格。建玉を決済した時はその時点の価格
   var gain = 0.0 // 累積利得
