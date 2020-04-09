@@ -31,13 +31,14 @@ object SlidingStrategy extends Strategy {
     }
   }
 
+  private def m(ix: Int) = SlidingWindow.slides(ix).metrics.head
+  private def s(ix: Int) = SlidingWindow.slides(ix).data.head.askPrice
 
   override def add(p: Price): Judgement.Value = {
-    if (SlidingWindow.newSlide) {
-      val s = SlidingWindow.slides
-      val s0 = s.head.data.head.askPrice
-      val s1 = s(1).data.head.askPrice
-      val s2 = s(2).data.head.askPrice
+    if (SlidingWindow.newSlide && SlidingWindow.slides.take(3).size >= 3) {
+      val s0 = s(0)
+      val s1 = s(1)
+      val s2 = s(2)
       if (s0 >= s1 && s1 >= s2 || s0 <= s1 && s1 <= s2) runSlide += 1
       else runSlide = 1
       prevDirection = direction
@@ -81,8 +82,6 @@ object SlidingStrategy extends Strategy {
   private def laps(from: Price, to: Price): Long = from.time.until(to.time, ChronoUnit.SECONDS)
 
   private def analyze(p: Price): Status.Value = {
-    def m(ix: Int) = SlidingWindow.slides(ix).metrics.head
-    def s(ix: Int) = SlidingWindow.slides(ix).data.head.askPrice
 
     def isMayEnter(p: Price): Boolean = {
       if (SlidingWindow.newSlide && runSlide >= 2) {

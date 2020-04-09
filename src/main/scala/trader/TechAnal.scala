@@ -62,7 +62,7 @@ object TechAnal {
       Metrics.add(data)
       Haken.add(Metrics.metrics)
       StrategyEvaluator.add(p)
-      Technical.showPrices(data)
+      if (Settings.showPrices) Technical.showPrices(data)
       if (Settings.replaymode && Settings.showPrices) {
         hakenCount -= 100
         if (Haken.newHaken) hakenCount = 1000
