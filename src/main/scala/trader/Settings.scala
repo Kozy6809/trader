@@ -14,5 +14,6 @@ object Settings {
   private[trader] val hakenDeclineThreshold = 35.0
   private[trader] val hakenScalpThreshold = 20.0
   private[trader] var replaymode = false
-  private[trader] var showPrices = true
+  private[trader] var showPrices = false
+
 }
