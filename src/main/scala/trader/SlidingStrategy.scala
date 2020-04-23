@@ -16,6 +16,7 @@ object SlidingStrategy extends Strategy {
   private var prevDirection = 0
   private var entryPrice: Price = _
   private var runSlide = 1
+  private var counterMovement = 0
 
   private def direction2action(): Judgement.Value = {
     if (direction > 0) Judgement.BUY
@@ -43,6 +44,7 @@ object SlidingStrategy extends Strategy {
       else runSlide = 1
       prevDirection = direction
       direction = (s0 - s1).signum
+      if (direction != positionDirection) counterMovement += 1
     }
 
     status = analyze(p)
@@ -105,15 +107,8 @@ object SlidingStrategy extends Strategy {
 
     def isMayChange(p: Price): Boolean = {
       if (SlidingWindow.newSlide) {
-        if (direction == positionDirection) false
-        else {
-          if (runSlide > 1) true
-          else {
-            false
-          }
-        }
+        counterMovement > 1
       } else false
-
     }
 
     status match {
