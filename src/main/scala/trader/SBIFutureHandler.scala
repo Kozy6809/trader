@@ -123,6 +123,7 @@ object SBIFutureHandler {
               StockLogger.writeMessage("想定外のエラーです")
               // 建玉が残っていればここで決済したいところだが、その術がない。携帯にアラートを送付するか
               close()
+              TechAnal.save()
               System.exit(1)
           }
       }
