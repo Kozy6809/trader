@@ -107,7 +107,10 @@ object SlidingStrategy extends Strategy {
 
     def isMayChange(p: Price): Boolean = {
       if (SlidingWindow.newSlide) {
-        counterMovement > 1
+        if (counterMovement > 1) {
+          counterMovement = 0
+          true
+        } else false
       } else false
     }
 

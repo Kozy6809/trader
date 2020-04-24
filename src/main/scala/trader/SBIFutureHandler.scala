@@ -142,7 +142,8 @@ object SBIFutureHandler {
         case e: Exception =>
           StockLogger.writeMessage("can't display price board")
           close()
-          status = LOGIN_CONT
+//          status = LOGIN_CONT
+          status = LOGIN_INITIAL
       }
     }
 
@@ -155,7 +156,8 @@ object SBIFutureHandler {
         case e: Exception =>
           StockLogger.writeMessage(e.getMessage)
           close()
-          status = LOGIN_CONT
+//          status = LOGIN_CONT
+          status = LOGIN_INITIAL
       }
     }
 
