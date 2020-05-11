@@ -15,5 +15,9 @@ object Settings {
   private[trader] val hakenScalpThreshold = 20.0
   private[trader] var replaymode = false
   private[trader] var showPrices = false
+  // for windows
+  private[trader] val driverLocation = "C:/geckodriver/geckodriver.exe"
+  // for linux
+//  private[trader] val driverLocation = "/usr/local/bin/geckodriver"
 
 }

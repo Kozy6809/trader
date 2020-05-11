@@ -65,7 +65,7 @@ object Technical {
     SBIFutureHandler.attemptGenDriver()
 
     val stdinr = new InputStreamReader(System.in)
-    PriceWindow.init()
+    if (Settings.showPrices) PriceWindow.init()
     def waitForMarket(): Unit = {
       // 時刻が5:25から8:45の間は8:45までスリープ
       Thread.sleep(remainSecInDuration(5, 25, 8, 45))
