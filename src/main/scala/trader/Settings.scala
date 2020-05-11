@@ -7,6 +7,7 @@ object Settings {
   private[trader] val id = lines.get(0)
   private[trader] val pwd = lines.get(1)
   private[trader] val pwd2 = lines.get(2)
+  private[trader] val driverLocation = lines.get(3)
 
   private[trader] val hakenThreshold = 450L
   private[trader] val hakenEnterThreshold = 35.0
@@ -15,9 +16,5 @@ object Settings {
   private[trader] val hakenScalpThreshold = 20.0
   private[trader] var replaymode = false
   private[trader] var showPrices = false
-  // for windows
-  private[trader] val driverLocation = "C:/geckodriver/geckodriver.exe"
-  // for linux
-//  private[trader] val driverLocation = "/usr/local/bin/geckodriver"
 
 }
