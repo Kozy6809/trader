@@ -93,6 +93,7 @@ object Technical {
       }
 
       if (nightSession && remainSecInDuration(5, 25, 5,26) > 0) stopRequest = true
+      if (nightSession && LocalTime.now().isAfter(LocalTime.of(5, 26))) stopRequest = true
     }
     TechAnal.save()
     handler.close()
@@ -144,7 +145,10 @@ object Technical {
         }
         Thread.sleep(1000) // 間隔が短いとbangされる
       } catch {
-        case e: Exception => retryLogin()
+        case e: Exception => {
+          StockLogger.writeMessage(s"Technical:trading ${e.getMessage}")
+          retryLogin()
+        }
       }
     }
   }
