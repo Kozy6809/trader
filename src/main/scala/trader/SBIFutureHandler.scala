@@ -35,7 +35,7 @@ object SBIFutureHandler {
 
     val firefoxBinary = new FirefoxBinary
     firefoxBinary.addCommandLineOptions("--headless")
-    System.setProperty("webdriver.gecko.driver", "C:/geckodriver/geckodriver.exe")
+    System.setProperty("webdriver.gecko.driver", Settings.driverLocation)
     val firefoxOptions = new FirefoxOptions
     firefoxOptions.setBinary(firefoxBinary)
     var done = false

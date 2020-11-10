@@ -7,6 +7,7 @@ object Settings {
   private[trader] val id = lines.get(0)
   private[trader] val pwd = lines.get(1)
   private[trader] val pwd2 = lines.get(2)
+  private[trader] val driverLocation = lines.get(3)
 
   private[trader] val hakenThreshold = 450L
   private[trader] val hakenEnterThreshold = 35.0
