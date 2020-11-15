@@ -45,7 +45,7 @@ object SBIFutureHandler {
         done = true
       } catch {
         case e: Exception =>
-          StockLogger.writeMessage(e.getMessage)
+          StockLogger.writeMessage(s"SBIFutureHander::genDriver ${e.getMessage}")
           Thread.sleep(6000)
       }
     }
@@ -154,7 +154,7 @@ object SBIFutureHandler {
         status = DONE
       } catch {
         case e: Exception =>
-          StockLogger.writeMessage(e.getMessage)
+          StockLogger.writeMessage(s"SBIFutureHandler::doContentsFrame ${e.getMessage}")
           close()
 //          status = LOGIN_CONT
           status = LOGIN_INITIAL
@@ -251,6 +251,7 @@ object SBIFutureHandler {
     var askPrice = 0.0
     var amt = 0
     var done = false
+    var errnum = 0
     while (!done) {
       try {
         val reloadButton = wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("psform:updcmd")))
@@ -263,8 +264,19 @@ object SBIFutureHandler {
         amt = if (amtCell.getText == "--") 0 else amtCell.getText.toInt
         done = true
       } catch {
-        case e: Exception =>
-          showContentsFrame(0)
+        case e: Exception => {
+          errnum += 1
+          StockLogger.writeMessage(s"SBIFutureHandler::acquirePrice error ${e.getMessage} times")
+          StockLogger.writeMessage(s"SBIFutureHandler::acquirePrice ${e.getMessage}")
+          try {
+            showContentsFrame(0)
+          } catch {
+            case e: Exception => {
+              StockLogger.writeMessage(s"SBIFutureHandler::showContentsFrame ${e.getMessage}")
+              throw e
+            }
+          }
+        }
       }
     }
     // StockLogger.writeMessage(price +" "+ amt)
@@ -277,7 +289,7 @@ object SBIFutureHandler {
       driver.close()
     } catch { // まさかclose()が例外を投げることがあるとは…
       case e: Exception =>
-        StockLogger.writeMessage(e.getMessage)
+        StockLogger.writeMessage(s"SBIFutureHandler::close ${e.getMessage}")
     }
   }
 
