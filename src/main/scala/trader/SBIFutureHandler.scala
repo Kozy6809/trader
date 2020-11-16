@@ -266,7 +266,7 @@ object SBIFutureHandler {
       } catch {
         case e: Exception => {
           errnum += 1
-          StockLogger.writeMessage(s"SBIFutureHandler::acquirePrice error ${e.getMessage} times")
+          StockLogger.writeMessage(s"SBIFutureHandler::acquirePrice error ${errnum} times")
           StockLogger.writeMessage(s"SBIFutureHandler::acquirePrice ${e.getMessage}")
           try {
             showContentsFrame(0)
