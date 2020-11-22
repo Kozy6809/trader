@@ -154,7 +154,8 @@ object SBIFutureHandler {
         status = DONE
       } catch {
         case e: Exception =>
-          StockLogger.writeMessage(s"SBIFutureHandler::doContentsFrame ${e.getMessage}")
+          StockLogger.writeMessage(e.getClass.toString)
+          StockLogger.writeMessage(s"SBIFutureHandler::doContentsFrame ${e.getMessage.split("\n")(0)}")
           close()
 //          status = LOGIN_CONT
           status = LOGIN_INITIAL
@@ -267,12 +268,14 @@ object SBIFutureHandler {
         case e: Exception => {
           errnum += 1
           StockLogger.writeMessage(s"SBIFutureHandler::acquirePrice error ${errnum} times")
-          StockLogger.writeMessage(s"SBIFutureHandler::acquirePrice ${e.getMessage}")
+          StockLogger.writeMessage(e.getClass.toString)
+          StockLogger.writeMessage(s"SBIFutureHandler::acquirePrice ${e.getMessage.split("\n")(0)}")
           try {
             showContentsFrame(0)
           } catch {
             case e: Exception => {
-              StockLogger.writeMessage(s"SBIFutureHandler::showContentsFrame ${e.getMessage}")
+              StockLogger.writeMessage(e.getClass.toString)
+              StockLogger.writeMessage(s"SBIFutureHandler::showContentsFrame ${e.getMessage.split("\n")(0)}")
               throw e
             }
           }
