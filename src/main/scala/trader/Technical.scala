@@ -6,6 +6,10 @@ import java.time.LocalTime
 import java.time.temporal.ChronoUnit
 import java.util.function.Consumer
 
+import scala.concurrent._
+import ExecutionContext.Implicits.global
+import scala.concurrent.duration._
+
 import scala.annotation.tailrec
 
 /**
@@ -80,8 +84,17 @@ object Technical {
     var stopRequest = false
     while (!stopRequest) {
       while (stdinr.ready()) stopRequest = userAction(stdinr.read())
-
-      trading()
+      val tradingFuture = Future {
+        trading()
+      }
+      try {
+        Await.ready(tradingFuture, 60.seconds)
+      } catch {
+        case e: Exception => {
+          StockLogger.writeMessage(s"Technical:main ${e.getMessage.split("\n")(0)}")
+          retryLogin()
+        }
+      }
 
       if (!nightSession && remainSecInDuration(15, 10, 16,30) > 0) {
         TechAnal.save()
