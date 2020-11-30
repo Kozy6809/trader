@@ -289,7 +289,7 @@ object SBIFutureHandler {
 
   def close(): Unit = {
     try {
-      driver.close()
+      driver.quit()
     } catch { // まさかclose()が例外を投げることがあるとは…
       case e: Exception =>
         StockLogger.writeMessage(s"SBIFutureHandler::close ${e.getMessage}")
