@@ -84,17 +84,8 @@ object Technical {
     var stopRequest = false
     while (!stopRequest) {
       while (stdinr.ready()) stopRequest = userAction(stdinr.read())
-      val tradingFuture = Future {
+
         trading()
-      }
-      try {
-        Await.ready(tradingFuture, 60.seconds)
-      } catch {
-        case e: Exception => {
-          StockLogger.writeMessage(s"Technical:main ${e.getMessage.split("\n")(0)}")
-          retryLogin()
-        }
-      }
 
       if (!nightSession && remainSecInDuration(15, 10, 16,30) > 0) {
         TechAnal.save()
@@ -150,8 +141,11 @@ object Technical {
     }
 
     def trading(): Unit = {
+      val acquireFuture = Future[Price] {
+        handler.acquirePrice()
+      }
       try {
-        val p = handler.acquirePrice()
+        val p = Await.result(acquireFuture, 30.seconds)
         if (TechAnal.add(p)) {
           printPrices(p)
         }
