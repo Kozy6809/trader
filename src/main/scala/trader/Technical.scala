@@ -145,7 +145,7 @@ object Technical {
         handler.acquirePrice()
       }
       try {
-        val p = Await.result(acquireFuture, 30.seconds)
+        val p = Await.result(acquireFuture, 10.seconds)
         if (TechAnal.add(p)) {
           printPrices(p)
         }
