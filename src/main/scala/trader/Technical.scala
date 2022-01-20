@@ -152,7 +152,11 @@ object Technical {
         Thread.sleep(1000) // 間隔が短いとbangされる
       } catch {
         case e: Exception => {
-          StockLogger.writeMessage(s"Technical:trading ${e.getMessage.split("\n")(0)}")
+          String msg = e.getMessage()
+          if (msg == null) msg = e.toString()
+          else msg = msg.split("\n")(0)
+
+          StockLogger.writeMessage(s"Technical:trading ${msg}")
           retryLogin()
         }
       }
