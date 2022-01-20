@@ -152,7 +152,7 @@ object Technical {
         Thread.sleep(1000) // 間隔が短いとbangされる
       } catch {
         case e: Exception => {
-          String msg = e.getMessage()
+          var msg = e.getMessage()
           if (msg == null) msg = e.toString()
           else msg = msg.split("\n")(0)
 
