@@ -9,3 +9,9 @@ slides*
 .Rproj.user
 hakens
 hakens_
+/.bloop/
+/.bsp/
+/.metals/
+/.vscode/
+/project/
+settings
