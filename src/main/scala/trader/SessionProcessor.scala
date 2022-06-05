@@ -2,8 +2,10 @@ package trader
 
 import java.io.{File, PrintWriter}
 import java.time.LocalTime
+import java.time.Duration
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
+import scala.language.postfixOps._
 import org.openqa.selenium.chrome.{ChromeDriver, ChromeOptions}
 import org.openqa.selenium.support.ui.{ExpectedConditions, Select, WebDriverWait}
 import org.openqa.selenium.{By, WebDriver, WebElement}
@@ -133,8 +135,7 @@ object SessionProcessor {
         else if (s.noHoldIfNegative) "no"
         else "Hold"
       }
-      writer.println(s.code +"\t"+ s.open +"\t"+ s.close +"\t"+ s.low +"\t"+ s.high +"\t"+
-        s.tickUnit +"\t"+ s.volumeunit +"\t"+ direction)
+      writer.println(s"${s.code}\t${s.open}\t${s.close}\t${s.low}\t${s.high}\t${s.tickUnit}\t${s.volumeunit}\t$direction")
     }
     writer.close()
   }
@@ -149,7 +150,7 @@ object SessionProcessor {
     val firstTablePath = "/html/body/div[3]/div/table/tbody/tr/td/table[4]/tbody/tr[2]/td/table/tbody"
     val secondTablePath = "/html/body/div[3]/div/table/tbody/tr/td/table[4]/tbody/tr[6]/td/table/tbody"
     try {
-      new WebDriverWait(driver, 8).until(ExpectedConditions.presenceOfElementLocated(
+      new WebDriverWait(driver, Duration.ofSeconds(8)).until(ExpectedConditions.presenceOfElementLocated(
         By.xpath(firstTablePath)))
 
       try {
@@ -165,7 +166,7 @@ object SessionProcessor {
       val tAllPath = if (noHoldingStocks) firstTablePath else secondTablePath
 
       val tAll = driver.findElement(By.xpath(tAllPath))
-      val rowsAll = tAll.findElements(By.xpath("./tr[position() != 1]")).asScala
+      val rowsAll = tAll.findElements(By.xpath("./tr[position() != 1]")).asScala.toList
       buyAll = rowsAll.map(_.findElement(By.xpath("./td[1]/a[1]")))
       sellAll = rowsAll.map(_.findElement(By.xpath("./td[1]/a[2]")))
       codesAll = rowsAll.map(_.findElement(By.xpath("./td[2]")))
@@ -179,7 +180,7 @@ object SessionProcessor {
 
       if (!noHoldingStocks) {
         val tHolding = driver.findElement(By.xpath(firstTablePath))
-        val rowsHolding = tHolding.findElements(By.xpath("./tr[position() != 1]")).asScala
+        val rowsHolding = tHolding.findElements(By.xpath("./tr[position() != 1]")).asScala.toList
         buyHolding = rowsHolding.map(_.findElement(By.xpath("./td[1]/a[1]")))
         sellHolding = rowsHolding.map(_.findElement(By.xpath("./td[1]/a[2]")))
         codesHolding = rowsHolding.map(_.findElement(By.xpath("./td[2]")))
@@ -240,7 +241,7 @@ object SessionProcessor {
     val codes = codesHolding.map(_.getText.take(4).toInt)
     val acquirePrices = acquiredHolding.map(x => toDouble0(x.getText.replace(",", "")))
     val volumes = volumeHolding.map(_.getText.replace(",", "").toInt)
-    for (t: (Int, Double, Int) <- (codes, acquirePrices, volumes).zipped) {
+    for (t: (Int, Double, Int) <- codes.lazyZip(acquirePrices).lazyZip(volumes)) {
       for (s <- stocks) {
         if (s.code == t._1) {
           s.acquiredPrice = t._2
@@ -256,7 +257,7 @@ object SessionProcessor {
       }
     }
     val currentPrices = currentAll.map(x => toDouble0(x.getText.replace(",", "")))
-    judgement = (for (sc: (Stock, Double) <- (stocks, currentPrices).zipped) yield sc._1.add(at, sc._2)).toSeq
+    judgement = (for (sc: (Stock, Double) <- stocks.lazyZip(currentPrices)) yield sc._1.add(at, sc._2)).toSeq
     println(at)
   }
 
@@ -329,7 +330,7 @@ object SessionProcessor {
     * 取得できなかった場合は後でStockに取得をリクエストさせる
     */
   def setOpenPrices() = {
-    for (s <- stocks zipWithIndex) {
+    for (s <- stocks.zipWithIndex) {
       val open = getOpenPrice(s._2)
       if (open > 0.0) {
         s._1.open = open
@@ -386,7 +387,7 @@ object SessionProcessor {
     val in_sasinari_kbn = driver.findElements(By.name("in_sasinari_kbn")).asScala
     in_sasinari_kbn(2).click()
     // 逆指値入力
-    new WebDriverWait(driver, 2).until(ExpectedConditions.presenceOfElementLocated(
+    new WebDriverWait(driver, Duration.ofSeconds(2)).until(ExpectedConditions.presenceOfElementLocated(
       By.id("input_trigger_price")))
     driver.findElement(By.id("input_trigger_price")).sendKeys(threshold.toString)
     driver.findElement(By.id("gsn_input_price")).sendKeys(price.toString)
@@ -395,13 +396,13 @@ object SessionProcessor {
     // 発注確認画面省略
     driver.findElement(By.name("skip_estimate")).click()
     // 発注。注文受付画面へ遷移
-    new WebDriverWait(driver, 2).until(ExpectedConditions.presenceOfElementLocated(
+    new WebDriverWait(driver, Duration.ofSeconds(2)).until(ExpectedConditions.presenceOfElementLocated(
       By.id("botton2")))
     driver.findElement(By.id("botton2")).click()
     // ポートフォリオ画面へ遷移
     driver.findElement(By.xpath("/html/body/div[1]/div[1]/div[2]/div/ul/li[1]/a/img")).click()
 
-    sl.writeMessage(i + " buy order specified at " + price)
+    sl.writeMessage(s"$i buy order specified at $price")
     sl.writeMessage(driver.getTitle)
     refreshAllElements()
   }
@@ -425,7 +426,7 @@ object SessionProcessor {
     // 発注確認画面省略
     driver.findElement(By.name("skip_estimate")).click()
     // 発注。注文受付画面へ遷移
-    new WebDriverWait(driver, 2).until(ExpectedConditions.presenceOfElementLocated(
+    new WebDriverWait(driver, Duration.ofSeconds(2)).until(ExpectedConditions.presenceOfElementLocated(
       By.id("botton2")))
     driver.findElement(By.id("botton2")).click()
     // ポートフォリオ画面へ遷移
@@ -459,7 +460,7 @@ object SessionProcessor {
     // 発注確認画面省略
     driver.findElement(By.name("skip_estimate")).click()
     // 発注。注文受付画面へ遷移
-    new WebDriverWait(driver, 2).until(ExpectedConditions.presenceOfElementLocated(
+    new WebDriverWait(driver, Duration.ofSeconds(2)).until(ExpectedConditions.presenceOfElementLocated(
       By.id("botton2")))
     driver.findElement(By.id("botton2")).click()
     // ポートフォリオ画面へ遷移
@@ -495,7 +496,7 @@ object SessionProcessor {
     // 発注確認画面省略
     driver.findElement(By.name("skip_estimate")).click()
     // 発注。注文受付画面へ遷移
-    new WebDriverWait(driver, 2).until(ExpectedConditions.presenceOfElementLocated(
+    new WebDriverWait(driver, Duration.ofSeconds(2)).until(ExpectedConditions.presenceOfElementLocated(
       By.id("botton2")))
     driver.findElement(By.id("botton2")).click()
     // ポートフォリオ画面へ遷移
@@ -522,7 +523,7 @@ object SessionProcessor {
     val in_sasinari_kbn = driver.findElements(By.name("in_sasinari_kbn")).asScala
     in_sasinari_kbn(2).click()
     // 逆指値入力
-    new WebDriverWait(driver, 2).until(ExpectedConditions.presenceOfElementLocated(
+    new WebDriverWait(driver, Duration.ofSeconds(2)).until(ExpectedConditions.presenceOfElementLocated(
       By.id("input_trigger_price")))
     driver.findElement(By.id("input_trigger_price")).sendKeys(threshold.toString)
     driver.findElement(By.id("gsn_input_price")).sendKeys(price.toString)
@@ -531,13 +532,13 @@ object SessionProcessor {
     // 発注確認画面省略
     driver.findElement(By.name("skip_estimate")).click()
     // 発注。注文受付画面へ遷移
-    new WebDriverWait(driver, 2).until(ExpectedConditions.presenceOfElementLocated(
+    new WebDriverWait(driver, Duration.ofSeconds(2)).until(ExpectedConditions.presenceOfElementLocated(
       By.id("botton2")))
     driver.findElement(By.id("botton2")).click()
     // ポートフォリオ画面へ遷移
     driver.findElement(By.xpath("/html/body/div[1]/div[1]/div[2]/div/ul/li[1]/a/img")).click()
 
-    sl.writeMessage(i + " sell order specified at " + price)
+    sl.writeMessage(s"$i sell order specified at $price")
     sl.writeMessage(driver.getTitle)
 
     refreshAllElements()
@@ -562,7 +563,7 @@ object SessionProcessor {
     // 発注確認画面省略
     driver.findElement(By.name("skip_estimate")).click()
     // 発注。注文受付画面へ遷移
-    new WebDriverWait(driver, 2).until(ExpectedConditions.presenceOfElementLocated(
+    new WebDriverWait(driver, Duration.ofSeconds(2)).until(ExpectedConditions.presenceOfElementLocated(
       By.id("botton2")))
     driver.findElement(By.id("botton2")).click()
     // ポートフォリオ画面へ遷移

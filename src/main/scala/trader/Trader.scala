@@ -110,7 +110,7 @@ object Trader {
     sp.updatePrices()
     sp.orderSellOpening()
 
-    StockLogger.close
+    StockLogger.close()
     sp.close()
   }
 

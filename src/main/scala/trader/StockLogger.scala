@@ -15,12 +15,12 @@ object StockLogger {
 
   def writeMessage(msg: String): Unit = {
     if (!replaymode) {
-      writer.println(LocalTime.now() + " " + msg)
+      writer.println(s"${LocalTime.now()} $msg")
       writer.flush()
     }
   }
   def bsMessage(msg: String): Unit = {
-    bswriter.println(LocalTime.now() +" "+ msg)
+    bswriter.println(s"${LocalTime.now()} $msg")
     bswriter.flush()
   }
 

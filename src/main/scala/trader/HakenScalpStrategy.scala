@@ -34,13 +34,13 @@ object HakenScalpStrategy extends Strategy {
       case Status.MAY_ENTER =>
         holding = direction2action()
         entryPrice = p
-        println(holding + " entry at " + entryPrice.askPrice)
+        println(s"$holding entry at ${entryPrice.askPrice}")
         Judgement.STAY
       case Status.ENTRY =>
         Judgement.STAY
       case Status.ENTERED =>
         positionPrice = p
-        println(holding + " positioned at " + positionPrice.askPrice)
+        println(s"$holding positioned at ${positionPrice.askPrice}")
         holding
       case Status.IN_THERE =>
         Judgement.STAY
@@ -60,7 +60,7 @@ object HakenScalpStrategy extends Strategy {
   }
 
   private def innerPrice(p: Price, offset: Double): Double = p.askPrice - offset * direction
-  private def isInner(price: Double, ref: Double): Boolean = (price - ref).signum * direction <= 0
+  private def isInner(price: Double, ref: Double): Boolean = (price - ref).sign * direction <= 0
   private def laps(from: Price, to: Price): Long = from.time.until(to.time, ChronoUnit.SECONDS)
 
   private def analyze(p: Price): Status.Value = {
@@ -75,7 +75,7 @@ object HakenScalpStrategy extends Strategy {
 
     def isMayChange(p: Price): Boolean = {
       val h = Haken
-        val basePrice = if ((entryPrice.askPrice - positionPrice.askPrice).signum == direction) entryPrice else positionPrice
+        val basePrice = if ((entryPrice.askPrice - positionPrice.askPrice).sign == direction) entryPrice else positionPrice
 
       (h.newHaken && (currentHaken.p.askPrice - basePrice.askPrice).abs >= Settings.hakenScalpThreshold) ||
           isInner(p.askPrice, innerPrice(currentHaken.p, Settings.hakenDeclineThreshold)) ||

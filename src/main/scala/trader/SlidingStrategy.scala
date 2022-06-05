@@ -43,7 +43,7 @@ object SlidingStrategy extends Strategy {
       if (s0 >= s1 && s1 >= s2 || s0 <= s1 && s1 <= s2) runSlide += 1
       else runSlide = 1
       prevDirection = direction
-      direction = (s0 - s1).signum
+      direction = (s0 - s1).sign.toInt
       if (direction != positionDirection) counterMovement += 1
     }
 
@@ -60,13 +60,13 @@ object SlidingStrategy extends Strategy {
         positionPrice = p
         leastProfittablePrice = positionPrice.askPrice + 10.0 * positionDirection
         nearPosition = positionPrice.askPrice + 20.0 * positionDirection
-        println(holding + " positioned at " + positionPrice.askPrice)
+        println(s"$holding positioned at ${positionPrice.askPrice}")
         holding
       case Status.IN_THERE =>
         Judgement.STAY
       case Status.MAY_CHANGE =>
         status = Status.OUT_THERE
-        println(direction +" "+ prevDirection +" settled at " + p.askPrice)
+        println(s"$direction $prevDirection settled at ${p.askPrice}")
         val r = settle(holding)
         holding = Judgement.STAY
         r
@@ -80,7 +80,7 @@ object SlidingStrategy extends Strategy {
   }
 
   private def innerPrice(p: Price, offset: Double): Double = p.askPrice - offset * positionDirection
-  private def isInner(price: Double, ref: Double): Boolean = (price - ref).signum * positionDirection <= 0
+  private def isInner(price: Double, ref: Double): Boolean = (price - ref).sign * positionDirection <= 0
   private def laps(from: Price, to: Price): Long = from.time.until(to.time, ChronoUnit.SECONDS)
 
   private def analyze(p: Price): Status.Value = {
@@ -94,10 +94,10 @@ object SlidingStrategy extends Strategy {
         val di5 = s0 - m0.m5
         val dm5 = m0.m5 - m1.m5
         val stg = Metrics.metrics.head.stage
-        if (dm5.abs > 1 && (s0 - s1).signum == di5.signum && di5.signum == dm5.signum
+        if (dm5.abs > 1 && (s0 - s1).sign == di5.sign && di5.sign == dm5.sign
           && (di5 + dm5).abs > 15.0) {
           if  ((di5 < 0 && stg != 1) || (di5 > 0 && stg != 4)) {
-            positionDirection = di5.signum
+            positionDirection = di5.sign.toInt
             direction = positionDirection
             true
           } else false

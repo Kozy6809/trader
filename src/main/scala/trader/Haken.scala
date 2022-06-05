@@ -55,7 +55,7 @@ object Haken {
       runlen += 1
 
       if (prevPrice != 0.0) {
-        h.direction = (p.askPrice - prevPrice).signum
+        h.direction = (p.askPrice - prevPrice).sign.toInt
         if (h.direction != hakens.head.direction) {
           h.lapsTime = -1L
           runlen = 1
@@ -68,7 +68,7 @@ object Haken {
       if (hakens.nonEmpty) {
         val h = hakens.head
         val diff = p.askPrice - h.metrics.data.head.askPrice
-        if ((diff - h.worstDecline).signum == -h.direction) h.worstDecline = diff
+        if ((diff - h.worstDecline).sign == -h.direction) h.worstDecline = diff
       }
     }
     prevPrice = p.askPrice
@@ -116,11 +116,11 @@ object Haken {
     hakens.foreach(h => {
       val m = h.metrics
       val p = m.data.head
-      writer.print(p.time +"\t")
-      writer.print(p.askPrice +"\t")
-      writer.print(h.direction +"\t")
-      writer.print(h.lapsTime +"\t")
-      writer.print(h.worstDecline +"\t")
+      writer.print(p.time.toString +"\t")
+      writer.print(s"${p.askPrice}\t")
+      writer.print(s"${h.direction}\t")
+      writer.print(s"${h.lapsTime}\t")
+      writer.print(s"${h.worstDecline}\t")
       writer.print(List(f"${m.amtrate}%.1f", f"${m.m5}%.1f", f"${m.m10}%.1f", f"${m.m20}%.1f", f"${m.m40}%.1f",
         f"${m.m5 - m.m20}%.1f", f"${m.m20 - m.m40}%.1f").mkString("\t"))
       writer.println("\t"+ m.stage +"\t"+ f"${h.rangeDistance}%.1f")

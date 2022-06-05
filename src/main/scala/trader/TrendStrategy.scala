@@ -31,7 +31,7 @@ object TrendStrategy extends Strategy {
         positionAskPrice = p.askPrice
         pole = p.askPrice
         holding = direction2action()
-        println(holding + " positioned at " + positionAskPrice)
+        println(s"$holding positioned at $positionAskPrice")
         holding
       case Status.MAY_CHANGE =>
         status = Status.OUT_THERE
@@ -66,10 +66,10 @@ object TrendStrategy extends Strategy {
       if (diffma._1.abs > 0.0 && diffma._2.abs > 0.0 &&
         (p.askPrice - m.m5).abs > 5.0 && (m.m5 - m.m10).abs > 0.0 &&
         (m.m10 - m.m20).abs > 0.0) {
-        val sumsgn = diffma._1.signum + diffma._2.signum +
-          (p.askPrice - m.m5).signum + (m.m5 - m.m10).signum + (m.m10 - m.m20).signum
-        if (sumsgn.abs == 5) {
-          direction = sumsgn.signum
+        val sumsgn = diffma._1.sign + diffma._2.sign +
+          (p.askPrice - m.m5).sign + (m.m5 - m.m10).sign + (m.m10 - m.m20).sign
+        if (sumsgn.abs == 5.0) {
+          direction = sumsgn.sign.toInt
           val r = SlidingWindow.calcRange()
           val e = if (direction > 0) r._2 else r._1
           r._2 - r._1 >= 30.0 && e == p.askPrice
@@ -106,14 +106,14 @@ object TrendStrategy extends Strategy {
 //      val r = (pole - p.askPrice).abs >= 15.0 && (pole - p.askPrice).signum == direction
 //      if (r) println(pole +" "+ p.askPrice)
 //      r
-      d1280.signum == -direction ||
-        (!(drb.signum == direction && drb.abs >= 5.0) && (
-      (dpp == 0.0 && d.abs >= 10.0 && d.signum == -direction && df320.abs < 1.0 && df320.signum == -direction) ||
-        (dpp.abs == 5.0 && d.abs >= 5.0 && d.signum == -direction && d320.signum == -direction) ||
-        (dpp.abs == 10.0 && d.signum == -direction && d320.signum == -direction) ||
-        (dpp.abs >= 15.0 && dpask.abs <= dp320.abs * 0.5 && dpask.signum == direction)
+      d1280.sign == -direction ||
+        (!(drb.sign == direction && drb.abs >= 5.0) && (
+      (dpp == 0.0 && d.abs >= 10.0 && d.sign == -direction && df320.abs < 1.0 && df320.sign == -direction) ||
+        (dpp.abs == 5.0 && d.abs >= 5.0 && d.sign == -direction && d320.sign == -direction) ||
+        (dpp.abs == 10.0 && d.sign == -direction && d320.sign == -direction) ||
+        (dpp.abs >= 15.0 && dpask.abs <= dp320.abs * 0.5 && dpask.sign == direction)
          ||
-      d640.signum == -direction))
+      d640.sign == -direction))
     }
 
     status match {

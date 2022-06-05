@@ -51,7 +51,7 @@ object HakenStageStrategy extends Strategy {
         Judgement.STAY
       case Status.MAY_CHANGE =>
         status = Status.OUT_THERE
-        println(direction +" "+ prevDirection +" settled at " + p.askPrice)
+        println(s"$direction $prevDirection settled at ${p.askPrice}")
         val r = settle(holding)
         holding = Judgement.STAY
         r
@@ -65,7 +65,7 @@ object HakenStageStrategy extends Strategy {
   }
 
   private def innerPrice(p: Price, offset: Double): Double = p.askPrice - offset * direction
-  private def isInner(price: Double, ref: Double): Boolean = (price - ref).signum * direction <= 0
+  private def isInner(price: Double, ref: Double): Boolean = (price - ref).sign * direction <= 0
   private def laps(from: Price, to: Price): Long = from.time.until(to.time, ChronoUnit.SECONDS)
 
   private def analyze(p: Price): Status.Value = {

@@ -64,7 +64,7 @@ class Stock(val code: Int, var previous: Double) {
   def checkOpenPrice() = {
     if (!openPriceDone && price != previous) {
       insensitiveTime = LocalTime.now().plusMinutes(5)
-      println(code + " open price is " + price)
+      println(s"$code open price is $price")
       open = price
       if (volumeunit == 0) volumeunit = (1000 / open).toInt * 100 + 100
       openPriceDone = true
@@ -243,7 +243,7 @@ class Stock(val code: Int, var previous: Double) {
       if (volume != 0) incomplete = true
       else {
         incomplete = false
-        StockLogger.writeMessage(code + " sell completed. price = " + price)
+        StockLogger.writeMessage(s"$code sell completed. price = $price")
       }
     }
     if (currentOrder == Judgement.BUY) {
@@ -251,7 +251,7 @@ class Stock(val code: Int, var previous: Double) {
       else {
         incomplete = false
         maxHolding = 0.0
-        StockLogger.writeMessage(code + " buy completed. price = " + acquiredPrice)
+        StockLogger.writeMessage(s"$code buy completed. price = $acquiredPrice")
       }
     }
     if (!incomplete) currentOrder = Judgement.STAY
@@ -265,7 +265,7 @@ class Stock(val code: Int, var previous: Double) {
     */
   def add(at: LocalTime, price: Double): Judgement = {
     checkCompletion()
-    println(code +" price: " + price)
+    println(s"$code price: $price")
     var judgement = Judgement.STAY
     this.price = price
     close = price

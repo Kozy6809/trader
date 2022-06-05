@@ -24,13 +24,13 @@ object StrategyEvaluator extends Strategy {
           case Judgement.BUY => holding = Judgement.BUY; settle(price - buyPrice, buyPrice)
           case Judgement.SETTLE_BUY => holding = Judgement.STAY; settle(price - buyPrice, buyPrice)
           case Judgement.SELL => decision = Judgement.STAY
-          case Judgement.SETTLE_SELL => println(p.time + " error: not buying, now selling")
+          case Judgement.SETTLE_SELL => println(s"${p.time} error: not buying, now selling")
           case _ =>
         }
       case Judgement.BUY =>
         decision match {
           case Judgement.BUY => decision = Judgement.STAY
-          case Judgement.SETTLE_BUY => println(p.time + " error: not selling, now buying")
+          case Judgement.SETTLE_BUY => println(s"${p.time} error: not selling, now buying")
           case Judgement.SELL => holding = Judgement.SELL; settle(sellPrice - price, sellPrice)
           case Judgement.SETTLE_SELL => holding = Judgement.STAY; settle(sellPrice - price, sellPrice)
           case _ =>
@@ -38,14 +38,14 @@ object StrategyEvaluator extends Strategy {
       case _ => // STAY
         decision match {
           case Judgement.BUY => holding = Judgement.BUY; price = buyPrice
-          case Judgement.SETTLE_BUY => println(p.time + "error: currently not holding")
+          case Judgement.SETTLE_BUY => println(s"${p.time} error: currently not holding")
           case Judgement.SELL => holding = Judgement.SELL; price = sellPrice
-          case Judgement.SETTLE_SELL => println(p.time + "error: currently not holding")
+          case Judgement.SETTLE_SELL => println(s"${p.time} error: currently not holding")
           case _ =>
         }
 
     }
-    if (decision != Judgement.STAY) StockLogger.bsMessage(p.time +"\t"+ price +"\t"+ gain +"\t"+ decision)
+    if (decision != Judgement.STAY) StockLogger.bsMessage(s"${p.time}\t$price\t$gain\t$decision")
 
     decision
 

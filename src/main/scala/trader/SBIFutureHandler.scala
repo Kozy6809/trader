@@ -242,9 +242,13 @@ object SBIFutureHandler {
   }
 
   /**
-    * 取引画面の板情報から現在値を取得する(プライスボードからではない!)
+   * 2022/5からのAngularが画面に対応するバージョン
+   * 旧版では取引画面の板情報から現在値を取得(プライスボードからではない!)
+   * していたが、今回はプライスボードからの取得を試みる
+   * 以前はプライスボードからの取得に不具合があったものと思うが思い出せない
+   * 画面更新のタイミングが制御できなかったとかかも
     *
-    * @return
+    * @return p Price
     */
   def acquirePrice(): Price = {
     val wait = new WebDriverWait(driver, Duration.ofSeconds(60))
@@ -255,11 +259,19 @@ object SBIFutureHandler {
     var errnum = 0
     while (!done) {
       try {
-        val reloadButton = wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("psform:updcmd")))
-        reloadButton.click()
-        val priceCell = wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//*[@id='psform']/table/tbody/tr[3]/td[3]/table/tbody/tr[1]/td[2]/b")))
-        val amtCell = wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//*[@id='psform']/table/tbody/tr[3]/td[3]/table/tbody/tr[6]/td[2]")))
-        val askPriceCell = wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//*[@id='psform']/table/tbody/tr[3]/td[1]/table/tbody/tr[2]/td[2]/table/tbody/tr[11]/td[2]")))
+        // 旧版
+        // val reloadButton = wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("psform:updcmd")))
+        // reloadButton.click()
+        // val priceCell = wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//*[@id='psform']/table/tbody/tr[3]/td[3]/table/tbody/tr[1]/td[2]/b")))
+        // val amtCell = wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//*[@id='psform']/table/tbody/tr[3]/td[3]/table/tbody/tr[6]/td[2]")))
+        // val askPriceCell = wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//*[@id='psform']/table/tbody/tr[3]/td[1]/table/tbody/tr[2]/td[2]/table/tbody/tr[11]/td[2]")))
+
+        val priceCell = wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("/html/body/app-root/div/nz-spin/div/oms-main/section/div[3]/as-split/as-split-area[1]/div/div/oms-price-board/div/section/div/div/div[2]/ul/li/div[2]/div/div[1]/div")))
+        println("price cell found")
+        val amtCell = wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("/html/body/app-root/div/nz-spin/div/oms-main/section/div[3]/as-split/as-split-area[1]/div/div/oms-price-board/div/section/div/div/div[2]/ul/li/div[3]/div/div[2]/div")))
+        println("amount cell found")
+        val askPriceCell = wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("/html/body/app-root/div/nz-spin/div/oms-main/section/div[3]/as-split/as-split-area[1]/div/div/oms-price-board/div/section/div/div/div[2]/ul/li/div[9]/ul/li[1]/span[3]")))
+        println("ask price cell found")
         price = priceCell.getText.toDouble
         askPrice = askPriceCell.getText.toDouble
         amt = if (amtCell.getText == "--") 0 else amtCell.getText.toInt

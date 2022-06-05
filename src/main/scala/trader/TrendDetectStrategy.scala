@@ -29,12 +29,12 @@ object TrendDetectStrategy extends Strategy {
       buysell match {
         case Judgement.STAY =>
           if (!j._1.isNaN && m.head.m5 > j._1 && Math.abs(p.price - prevPrice) > 10) {
-            println(p.time + " price " + p.price + " exceeds. Let's buy!")
+            println(s"${p.time} price ${p.price} exceeds. Let's buy!")
             decision = Judgement.BUY
             buysell = Judgement.BUY
             prevPrice = p.price
           } else if (!j._2.isNaN && m.head.m5 < j._2 && Math.abs(p.price - prevPrice) > 10) {
-            println(p.time + " price " + p.price + " decline. Do sell!")
+            println(s"${p.time} price ${p.price} decline. Do sell!")
             decision = Judgement.SELL
             buysell = Judgement.SELL
             prevPrice = p.price
@@ -42,10 +42,10 @@ object TrendDetectStrategy extends Strategy {
         case Judgement.SELL =>
           if (!j._1.isNaN && m.head.m5 > j._1 && Math.abs(p.price - prevPrice) > 10) {
             if (!lowVolatility) {
-              println(p.time + " price " + p.price + " exceeds. Let's buy!")
+              println(s"${p.time} price ${p.price} exceeds. Let's buy!")
               decision = Judgement.BUY
             } else {
-              println(p.time + " price " + p.price + " exceeds. Let's sell for lowV!")
+              println(s"${p.time} price ${p.price} exceeds. Let's sell for lowV!")
               decision = Judgement.SELL
             }
             buysell = Judgement.BUY
@@ -54,10 +54,10 @@ object TrendDetectStrategy extends Strategy {
         case Judgement.BUY =>
           if (!j._2.isNaN && m.head.m5 < j._2 && Math.abs(p.price - prevPrice) > 10) {
             if (!lowVolatility) {
-              println(p.time + " price " + p.price + " decline. Do sell!")
+              println(s"${p.time} price ${p.price} decline. Do sell!")
               decision = Judgement.SELL
             } else {
-              println(p.time + " price " + p.price + " decline. Do buy for lowV!")
+              println(s"${p.time} price ${p.price} decline. Do buy for lowV!")
               decision = Judgement.BUY
             }
             buysell = Judgement.SELL

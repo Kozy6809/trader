@@ -258,8 +258,8 @@ object TechAnal {
     val writer = new PrintWriter(filename)
     SlidingWindow.slides.foreach(s => {
       val p = s.data.head
-      writer.print(p.time + "\t")
-      writer.print(p.askPrice + "\t")
+      writer.print(s"${p.time}\t")
+      writer.print(s"${p.askPrice}\t")
       writer.println(s.result.mkString("\t"))
     })
     writer.close()
@@ -271,11 +271,11 @@ object TechAnal {
   def savePeaks(): Unit = {
     val len = Metrics.metrics.length
     val uw = new PrintWriter("upeaks")
-    upeaks.foreach(t => uw.println((len - t._1) + "\t" + (len - t._2)))
+    upeaks.foreach(t => uw.println(s"${len - t._1}\t${len - t._2}"))
     uw.close()
 
     val lw = new PrintWriter("lpeaks")
-    lpeaks.foreach(t => lw.println((len - t._1) + "\t" + (len - t._2)))
+    lpeaks.foreach(t => lw.println(s"${len - t._1}\t${len - t._2}"))
     lw.close()
   }
 
