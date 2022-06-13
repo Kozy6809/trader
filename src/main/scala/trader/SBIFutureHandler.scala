@@ -58,6 +58,8 @@ object SBIFutureHandler {
     println("no error in genDriver ")
   }
 
+  def timer(sec: Long): WebDriverWait = new WebDriverWait(driver, Duration.ofSeconds(sec))
+
   def login(): Unit = {
     object  Status extends Enumeration {
       val LOGIN_INITIAL, LOGIN_CONT, MAIN, PRICEBOARD, CONTENTSFRAME, DONE = Value
@@ -67,7 +69,6 @@ object SBIFutureHandler {
 
     def doLogin(): Unit = {
       genDriver()
-      val wait = new WebDriverWait(driver, Duration.ofSeconds(60))
       StockLogger.writeMessage("attempt to initial login")
       // ログイン画面にアクセス
       driver.get("https://www.sbisec.co.jp/ETGate/?OutSide=on&_ControlID=WPLETsmR001Control&_DataStoreID=DSWPLETsmR001Control&sw_page=Future&cat1=home&cat2=none&getFlg=on")
@@ -77,7 +78,7 @@ object SBIFutureHandler {
       driver.findElement(By.name("user_password")).sendKeys(Settings.pwd)
       // ログインボタンクリック
       val login = driver.findElement(By.name("ACT_login"))
-      wait.until(ExpectedConditions.elementToBeClickable(login))
+      timer(60).until(ExpectedConditions.elementToBeClickable(login))
       // ポップアップでクリックボタンが押せない時、ポップアップが消えるのを待つ
       var done = false
       while (!done) {
@@ -105,10 +106,11 @@ object SBIFutureHandler {
 
     def doMain(): Unit = {
       println(driver.getTitle)
-      val wait = new WebDriverWait(driver, Duration.ofSeconds(60))
+      val wait = timer(60)
       try {
         StockLogger.writeMessage("waiting main view")
-        wait.until(ExpectedConditions.visibilityOfElementLocated(By.name("main")))
+        // wait.until(ExpectedConditions.visibilityOfElementLocated(By.name("main")))
+        wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("""//*[@id="header"]/oms-header-board/div/div/oms-nav-header""")))
         status = PRICEBOARD
       } catch {
         case e: Exception =>
@@ -137,7 +139,7 @@ object SBIFutureHandler {
       try {
         priceBoard()
         StockLogger.writeMessage("price board displayed")
-        status = CONTENTSFRAME
+        status = DONE
       } catch {
         case e: Exception =>
           StockLogger.writeMessage("can't display price board")
@@ -174,13 +176,15 @@ object SBIFutureHandler {
   }
 
   def priceBoard(): Unit = {
-    val wait = new WebDriverWait(driver, Duration.ofSeconds(60))
+    val wait = timer(60)
 
-    driver.switchTo().defaultContent()
-    val mainFrame = wait.until(ExpectedConditions.frameToBeAvailableAndSwitchToIt("main"))
-    val priceFrame = wait.until(ExpectedConditions.frameToBeAvailableAndSwitchToIt("price"))
-    val firstRow = wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//*[@id='datagrid-row-r7-2-0']")))
-
+    // driver.switchTo().defaultContent()
+    // // !!! TODO 2022/5のAngular移行でエレメントのpathが変わったはず。確認する!!
+    // val mainFrame = wait.until(ExpectedConditions.frameToBeAvailableAndSwitchToIt("main"))
+    // val priceFrame = wait.until(ExpectedConditions.frameToBeAvailableAndSwitchToIt("price"))
+    // val firstRow = wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//*[@id='datagrid-row-r7-2-0']")))
+    val firstRow = wait.until(ExpectedConditions.visibilityOfElementLocated(
+    By.xpath("""/html/body/app-root/div/nz-spin/div/oms-main/section/div[3]/as-split/as-split-area[1]/div/div/oms-price-board""")))
   }
 
   /**
@@ -188,8 +192,9 @@ object SBIFutureHandler {
     * 重要なお知らせ画面でなければ例外を投げる
     */
   def clearAcknowledge(): Unit = {
-    val wait = new WebDriverWait(driver, Duration.ofSeconds(60))
+    val wait = timer(60)
     try {
+      // "重要なお知らせ"のpath。2022/6/11 従前から変わっていないことを確認した。
       val noticemsg = wait.until(ExpectedConditions.visibilityOfElementLocated(
         By.xpath("/html/body/div[1]/table/tbody/tr/td[1]/table/tbody/tr[2]/td[2]/table/tbody/tr[3]/td/div/b")))
       StockLogger.writeMessage("重要なお知らせ: " + noticemsg.getText)
@@ -201,16 +206,19 @@ object SBIFutureHandler {
     // 同時に複数のメッセージがポストされたら以下の処理をリピートしなければならないが、これまでそのようなケースは起きていない
     try {
       // 最新メッセージの表示
+      // 最新メッセージへのリンクのpath。2022/6/11 従前から変わっていないことを確認した。
       val msglnk = wait.until(ExpectedConditions.visibilityOfElementLocated(
         By.xpath("/html/body/div[1]/table/tbody/tr/td[1]/table/tbody/tr[2]/td[2]/form/table[4]/tbody/tr/td/table/tbody/tr[2]/td[2]/table/tbody/tr[2]/td/a")))
       StockLogger.writeMessage("重要なお知らせを表示します: " + msglnk.getText)
       msglnk.click()
+      // 同意ボタンのpath。2022/6/11 従前から変わっていないことを確認した。
       val agreebtn = wait.until(ExpectedConditions.visibilityOfElementLocated(
         By.xpath("/html/body/div[1]/table/tbody/tr/td[1]/table/tbody/tr/td[2]/form/table[4]/tbody/tr/td/input[1]")))
       StockLogger.writeMessage("重要なお知らせに同意します")
       agreebtn.click()
+      // 戻るボタンのpath。2022/6/11 従前から変わっていないことを確認した。
       val backbtn = wait.until(ExpectedConditions.visibilityOfElementLocated(
-        By.xpath("/html/body/div/table/tbody/tr/td[1]/table/tbody/tr/td[2]/form/table[7]/tbody/tr[4]/td/input[1]")))
+        By.xpath("/html/body/div[1]/table/tbody/tr/td[1]/table/tbody/tr/td[2]/form/table[7]/tbody/tr[4]/td/input[1]")))
       StockLogger.writeMessage("重要なお知らせ一覧に戻ります")
       backbtn.click()
     } catch {
@@ -218,6 +226,7 @@ object SBIFutureHandler {
         StockLogger.writeMessage("重要なお知らせを処理できませんでした")
         throw e
     }
+      // メッセージ無し表示のpath。2022/6/11 従前から変わっていないことを確認した。
     val nomsg = wait.until(ExpectedConditions.visibilityOfElementLocated(
       By.xpath("/html/body/div[1]/table/tbody/tr/td[1]/table/tbody/tr[2]/td[2]/form/table[3]/tbody/tr/td/table/tbody/tr[2]/td/div/b")))
     StockLogger.writeMessage("重要なお知らせはもうありません: " + nomsg.getText)
@@ -226,23 +235,43 @@ object SBIFutureHandler {
   }
 
   /**
-    *
+    * プライスボードの取引ボタンをクリックして取引画面を表示する。例外を投げる可能性あり
+    * !!! TODO 2022/5のAngular移行でエレメントのpathが変わったはず。確認する!!
     * @param buttonNum 0: 新規売 1: 新規買 3: 決済売 4: 決済買
     * @return
     */
   def showContentsFrame(buttonNum: Int): Unit = {
-    priceBoard()
-    val wait = new WebDriverWait(driver, Duration.ofSeconds(60))
-    val firstRow = wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//*[@id='datagrid-row-r7-2-0']")))
-    val tradeButtons = firstRow.findElements(By.xpath("td[15]/div/button"))
-    tradeButtons.get(buttonNum).click()
-    driver.switchTo().parentFrame()
-    val contentsFrame = wait.until(ExpectedConditions.frameToBeAvailableAndSwitchToIt("contents"))
+    val wait = timer(60)
+    // val firstRow = wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//*[@id='datagrid-row-r7-2-0']")))
+    val firstRow = wait.until(ExpectedConditions.visibilityOfElementLocated(
+    By.xpath("/html/body/app-root/div/nz-spin/div/oms-main/section/div[3]/as-split/as-split-area[1]/div/div/oms-price-board")))
+    //*[@id="tableHeight"]/li/div[11]/ul/li[1]/button[1]
+    
+    // 新規売 "//*[@id="tableHeight"]/li/div[11]/ul/li[1]/button[1]"
+    // 新規買 "//*[@id="tableHeight"]/li/div[11]/ul/li[1]/button[2]"
+    // 決済売 "//*[@id="tableHeight"]/li/div[11]/ul/li[2]/button[1]"
+    // 決済買 "//*[@id="tableHeight"]/li/div[11]/ul/li[2]/button[2]"
+    val buttonPath = buttonNum match {
+      case 0 => """//*[@id="tableHeight"]/li/div[11]/ul/li[1]/button[1]""" // 新規売
+      case 1 => """//*[@id="tableHeight"]/li/div[11]/ul/li[1]/button[2]""" // 新規買
+      case 3 => """//*[@id="tableHeight"]/li/div[11]/ul/li[2]/button[1]""" // 決済売
+      case 4 => """//*[@id="tableHeight"]/li/div[11]/ul/li[2]/button[2]""" // 決済買
+    }
+    val tradeButton = firstRow.findElement(By.xpath(buttonPath))
+    tradeButton.click()
+    // driver.switchTo().parentFrame()
+    // val contentsFrame = wait.until(ExpectedConditions.frameToBeAvailableAndSwitchToIt("contents"))
+
+    // TODO 新規売りと新規買いで確認ボタンのパスは変わらない。決済では変わるはずなので処理を分ける必要あり
+    // 新規の場合のパス: //*[@id="scrollBottom"]/div/oms-new-future-order/section/div[1]/div[4]/oms-order-input/section/div/div[3]/div[2]/button
+    val btnConfirm = wait.until(ExpectedConditions.visibilityOfElementLocated(
+        By.xpath("""//*[@id="scrollBottom"]/div/oms-new-future-order/section/div[1]/div[4]/oms-order-input/section/div/div[3]/div[2]/button""")))
+
     StockLogger.writeMessage("frame " + buttonNum + " displayed")
   }
 
   /**
-   * 2022/5からのAngularが画面に対応するバージョン
+   * 2022/5からのAngularにより生成される画面に対応するバージョン
    * 旧版では取引画面の板情報から現在値を取得(プライスボードからではない!)
    * していたが、今回はプライスボードからの取得を試みる
    * 以前はプライスボードからの取得に不具合があったものと思うが思い出せない
@@ -251,7 +280,7 @@ object SBIFutureHandler {
     * @return p Price
     */
   def acquirePrice(): Price = {
-    val wait = new WebDriverWait(driver, Duration.ofSeconds(60))
+    val wait = timer(60)
     var price = 0.0
     var askPrice = 0.0
     var amt = 0
@@ -266,31 +295,28 @@ object SBIFutureHandler {
         // val amtCell = wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//*[@id='psform']/table/tbody/tr[3]/td[3]/table/tbody/tr[6]/td[2]")))
         // val askPriceCell = wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//*[@id='psform']/table/tbody/tr[3]/td[1]/table/tbody/tr[2]/td[2]/table/tbody/tr[11]/td[2]")))
 
-        val priceCell = wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("/html/body/app-root/div/nz-spin/div/oms-main/section/div[3]/as-split/as-split-area[1]/div/div/oms-price-board/div/section/div/div/div[2]/ul/li/div[2]/div/div[1]/div")))
-        println("price cell found")
-        val amtCell = wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("/html/body/app-root/div/nz-spin/div/oms-main/section/div[3]/as-split/as-split-area[1]/div/div/oms-price-board/div/section/div/div/div[2]/ul/li/div[3]/div/div[2]/div")))
-        println("amount cell found")
-        val askPriceCell = wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("/html/body/app-root/div/nz-spin/div/oms-main/section/div[3]/as-split/as-split-area[1]/div/div/oms-price-board/div/section/div/div/div[2]/ul/li/div[9]/ul/li[1]/span[3]")))
-        println("ask price cell found")
-        price = priceCell.getText.toDouble
-        askPrice = askPriceCell.getText.toDouble
-        amt = if (amtCell.getText == "--") 0 else amtCell.getText.toInt
+        val priceCell = wait.until(ExpectedConditions.visibilityOfElementLocated(
+        By.xpath("/html/body/app-root/div/nz-spin/div/oms-main/section/div[3]/as-split/as-split-area[1]/div/div/oms-price-board/div/section/div/div/div[2]/ul/li/div[2]/div/div[1]/div")))
+        val amtCell = wait.until(ExpectedConditions.visibilityOfElementLocated(
+        By.xpath("/html/body/app-root/div/nz-spin/div/oms-main/section/div[3]/as-split/as-split-area[1]/div/div/oms-price-board/div/section/div/div/div[2]/ul/li/div[3]/div/div[2]/div")))
+        val askPriceCell = wait.until(ExpectedConditions.visibilityOfElementLocated(
+        By.xpath("/html/body/app-root/div/nz-spin/div/oms-main/section/div[3]/as-split/as-split-area[1]/div/div/oms-price-board/div/section/div/div/div[2]/ul/li/div[9]/ul/li[1]/span[3]")))
+        price = priceCell.getText.replaceAll(",", "").toDouble
+        askPrice = askPriceCell.getText.replaceAll(",", "").toDouble
+        amt = if (amtCell.getText == "--") 0 else amtCell.getText.replaceAll(",", "").toInt
         done = true
       } catch {
         case e: Exception => {
           errnum += 1
+          if (errnum > 3) {
+            StockLogger.writeMessage(s"SBIFutureHandler::error exceeds limit times")
+            driver.close()
+            System.exit(1)
+          }
           StockLogger.writeMessage(s"SBIFutureHandler::acquirePrice error ${errnum} times")
           StockLogger.writeMessage(e.getClass.toString)
           StockLogger.writeMessage(s"SBIFutureHandler::acquirePrice ${e.getMessage.split("\n")(0)}")
-          try {
-            showContentsFrame(0)
-          } catch {
-            case e: Exception => {
-              StockLogger.writeMessage(e.getClass.toString)
-              StockLogger.writeMessage(s"SBIFutureHandler::showContentsFrame ${e.getMessage.split("\n")(0)}")
-              throw e
-            }
-          }
+          driver.navigate().refresh()
         }
       }
     }
@@ -327,7 +353,7 @@ object SBIFutureHandler {
     order(4, amt, newOrder = false)
     StockLogger.writeMessage("決済買 " + amt)
   }
-
+  // TODO エレメントのパスが2022/5のAngular移行で変化した可能性あり。確認すること
   def order(buttonNum: Int, amt: Int, newOrder: Boolean): Unit = {
     var done = false
     while (!done) {
