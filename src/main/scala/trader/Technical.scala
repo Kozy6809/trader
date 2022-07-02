@@ -24,7 +24,7 @@ import scala.annotation.tailrec
 object Technical {
   private val handler = SBIFutureHandler
   val tradeUnit = 1
-  private var nightSession = remainSecInDuration(15, 15, 5,30) > 0
+  private var nightSession = remainSecInDuration(15, 15, 6, 0) > 0
 
   /**
     * 指定された時刻が指定された範囲に入っているなら、範囲終端までのミリ秒数を返す。範囲外なら0を返す
@@ -48,13 +48,14 @@ object Technical {
       res
     }
 
+
   def isClosing(t: LocalTime = LocalTime.now): Boolean = {
-    (t.compareTo(LocalTime.of(5, 10)) > 0 && t.compareTo(LocalTime.of(5, 31)) < 0) ||
+    (t.compareTo(LocalTime.of(5, 40)) > 0 && t.compareTo(LocalTime.of(6, 1)) < 0) ||
       (t.compareTo(LocalTime.of(14, 55)) > 0 && t.compareTo(LocalTime.of(15, 11)) < 0)
   }
 
   def isClosetime(t: LocalTime = LocalTime.now): Boolean = {
-    if (nightSession) t.compareTo(LocalTime.of(5, 20)) > 0
+    if (nightSession) t.compareTo(LocalTime.of(5, 50)) > 0
     else t.compareTo(LocalTime.of(15, 5)) > 0
   }
 
@@ -71,8 +72,8 @@ object Technical {
     val stdinr = new InputStreamReader(System.in)
     if (Settings.showPrices) PriceWindow.init()
     def waitForMarket(): Unit = {
-      // 時刻が5:25から8:45の間は8:45までスリープ
-      Thread.sleep(remainSecInDuration(5, 25, 8, 45))
+      // 時刻が5:55から8:45の間は8:45までスリープ
+      Thread.sleep(remainSecInDuration(5, 55, 8, 45))
       // 時刻が15:10から16:30の間は16:30までスリープ
       Thread.sleep(remainSecInDuration(15, 10, 16, 30))
       Thread.sleep(15000L)
@@ -96,7 +97,7 @@ object Technical {
         handler.login()
       }
 
-      if (nightSession && remainSecInDuration(5, 25, 8,45) > 0) stopRequest = true
+      if (nightSession && remainSecInDuration(5, 55, 8,45) > 0) stopRequest = true
     }
     TechAnal.save()
     handler.close()

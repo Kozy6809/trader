@@ -118,7 +118,8 @@ object SBIFutureHandler {
           StockLogger.writeMessage("メイン画面が表示されません。重要なお知らせをチェックします")
           try {
             clearAcknowledge()
-            wait.until(ExpectedConditions.visibilityOfElementLocated(By.name("main")))
+            // wait.until(ExpectedConditions.visibilityOfElementLocated(By.name("main")))
+            wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("""//*[@id="header"]/oms-header-board/div/div/oms-nav-header""")))
             status = PRICEBOARD
           } catch {
             case e: Exception =>
