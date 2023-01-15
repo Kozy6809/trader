@@ -51,8 +51,7 @@ object PriceWindow extends JFrame {
                price: Double, prevPrice: Double,
               m5: Double, m10: Double, m20: Double, m40: Double,
               diffm5: Double, diffm10: Double, diffm20: Double, diffm40: Double,
-              amtrate: Double, diffamt: Int,
-             rangemin: Double, rangemax: Double): Unit = {
+              amtrate: Double, diffamt: Int): Unit = {
 
     if (centerPrice == 0.0) centerPrice = price
     if (Haken.newHaken) haken = Haken.hakens.head.p.askPrice
@@ -63,8 +62,6 @@ object PriceWindow extends JFrame {
     ym10 = toYpos(m10)
     ym20 = toYpos(m20)
     ym40 = toYpos(m40)
-    yrangemin = toYpos(rangemin)
-    yrangemax = toYpos(rangemax)
     yhaken = if (haken > 0.0) toYpos(haken) else hcenter
 
     def diff2Ylen(d: Double): Int = (d * 5 * scaleFactor).round.toInt
@@ -127,8 +124,6 @@ object PriceWindow extends JFrame {
       g.drawString(strtime, x(1), 10)
 
       g.setColor(java.awt.Color.red)
-      g.drawLine(0, yrangemin + yoffset, w, yrangemin + yoffset)
-      g.drawLine(0, yrangemax + yoffset, w, yrangemax + yoffset)
       g.setColor(java.awt.Color.blue)
       g.drawLine(0, yhaken + yoffset, w, yhaken + yoffset)
     }

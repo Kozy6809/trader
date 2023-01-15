@@ -164,15 +164,14 @@ object Technical {
     }
   }
 
-  def showPrices(data: List[Price] = TechAnal.data, metrics: List[Metrics] = Metrics.metrics, srange: (Double, Double) = SlidingWindow.range) :Unit = {
-    if (!Settings.replaymode) println(srange)
+  def showPrices(data: List[Price] = TechAnal.data, metrics: List[Metrics] = Metrics.metrics) :Unit = {
     val p = data.head
     val prev = if (data.size > 1) data(1) else p
     val m = metrics.head
     val diffma = TechAnal.maDiff(m = metrics)
     val diffamt = TechAnal.amtDiff(d = data)
     PriceWindow.setData(p.time, p.askPrice, prev.askPrice, m.m5, m.m10, m.m20, m.m40,
-      diffma._1, diffma._2, diffma._3, diffma._4, m.amtrate, diffamt, srange._1, srange._2)
+      diffma._1, diffma._2, diffma._3, diffma._4, m.amtrate, diffamt)
     PriceWindow.repaint()
   }
 
@@ -190,7 +189,7 @@ object Technical {
     mkMetricses(metrics)
     var price: Double = 0.0
     metricses.foreach(m => {
-      showPrices(m.head.data, m, SlidingWindow.calcRange(m.head.slides))
+      showPrices(m.head.data, m)
       if (price != m.head.data.head.askPrice) {
         Thread.sleep(100L)
         price = m.head.data.head.askPrice

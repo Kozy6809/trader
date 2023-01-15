@@ -5,21 +5,22 @@ import java.time.temporal.ChronoUnit
 /**
   * 現在の株価から計算される統計情報を保持するクラス
   * 現在保持しているのは:
-  * 出来高/sec
-  * 移動平均(320, 640, 1280, 2560sec)
+  * 出来高/sec → 出来高の60秒emaに変更(2023/1/15)
+  * 売値の移動平均(300, 600, 1200, 2400sec)
   */
-class Metrics(val data: List[Price], val slides: List[SlidingWindow]) {
-  private[trader] val amtrate = if (data.tail.isEmpty) 0.0
-  else (data.head.amt - data(1).amt) / (data(1).time.until(data.head.time, ChronoUnit.MILLIS) / 1000.0)
-  private val mas: Array[Double] = Array.ofDim(4)
+class Metrics(val data: List[Price]) {
+  private val mas: Array[Double] = Array.ofDim(5)
   mas(0) = ema(0, 300)
   mas(1) = ema(1, 600)
   mas(2) = ema(2, 1200)
-  mas(3) = ema(3, 2400)
+  mas(3) = ema(3, 2400) // ここまで売値のema
+  mas(4) = ema(4, 60) // 出来高のema
   private[trader] def m5 = mas(0)
   private[trader] def m10 = mas(1)
   private[trader] def m20 = mas(2)
   private[trader] def m40 = mas(3)
+  private[trader] def amtrate = mas(4)
+
   private[trader] def maRange: Double = mas.max - mas.min
   private[trader] def rangeDistance(p: Double): Double = {
     val u = mas.max
@@ -34,31 +35,26 @@ class Metrics(val data: List[Price], val slides: List[SlidingWindow]) {
   else if (m40 >= m5 && m5 >= m20) 5
   else 6
 
-  def sma(period: Long): Double = {
-    val from = data.head.time.minusSeconds(period)
-    val dataSlice = data.takeWhile(p => p.time.compareTo(from) >= 0)
-    val sum = dataSlice.map(t => t.price).sum
-    sum / dataSlice.length
-  }
-
   def ema(i:Int, period: Long): Double = {
-    if (Metrics.metrics.isEmpty) data.head.askPrice
+    // i == 4なら出来高の、それ以外なら売値のemaを求める
+    val v = if (i == 4) data.head.amt else data.head.askPrice
+    if (Metrics.metrics.isEmpty) v
     else {
       val prev = Metrics.metrics.head.mas(i)
       val from = data.head.time.minusSeconds(period)
       val nprev = Metrics.metrics.takeWhile(m => m.data.head.time.compareTo(from) >= 0).length
       val k = 2.0 / (nprev + 1)
-      prev + k * (data.head.askPrice - prev)
+      prev + k * (v - prev)
     }
   }
 
 }
 
-object Metrics {
+object Metrics { // Metricsのリストを保持する
   var metrics = List.empty[Metrics]
 
   def add(data: List[Price]): Unit = {
-    val m = new Metrics(data, SlidingWindow.slides)
+    val m = new Metrics(data)
     metrics = m :: metrics
   }
 
