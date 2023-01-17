@@ -5,7 +5,7 @@ import java.time.temporal.ChronoUnit
 /**
   * 現在の株価から計算される統計情報を保持するクラス
   * 現在保持しているのは:
-  * 出来高/sec → 出来高の60秒emaに変更(2023/1/15)
+  * 出来高/sec → 出来高の差分の60秒emaに変更(2023/1/18)
   * 売値の移動平均(300, 600, 1200, 2400sec)
   */
 class Metrics(val data: List[Price]) {
@@ -14,7 +14,7 @@ class Metrics(val data: List[Price]) {
   mas(1) = ema(1, 600)
   mas(2) = ema(2, 1200)
   mas(3) = ema(3, 2400) // ここまで売値のema
-  mas(4) = ema(4, 60) // 出来高のema
+  mas(4) = ema(4, 60) // 出来高の差分のema
   private[trader] def m5 = mas(0)
   private[trader] def m10 = mas(1)
   private[trader] def m20 = mas(2)
@@ -36,8 +36,12 @@ class Metrics(val data: List[Price]) {
   else 6
 
   def ema(i:Int, period: Long): Double = {
+    // 出来高の差分を返す
+    def diffamt: Double = {
+      if (data.size > 1) data.head.amt - data(1).amt else data.head.amt 
+    }
     // i == 4なら出来高の、それ以外なら売値のemaを求める
-    val v = if (i == 4) data.head.amt else data.head.askPrice
+    val v = if (i == 4) diffamt else data.head.askPrice
     if (Metrics.metrics.isEmpty) v
     else {
       val prev = Metrics.metrics.head.mas(i)
