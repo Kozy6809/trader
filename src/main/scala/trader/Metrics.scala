@@ -47,8 +47,11 @@ class Metrics(val data: List[Price]) {
       val prev = Metrics.metrics.head.mas(i)
       val from = data.head.time.minusSeconds(period)
       val nprev = Metrics.metrics.takeWhile(m => m.data.head.time.compareTo(from) >= 0).length
-      val k = 2.0 / (nprev + 1)
-      prev + k * (v - prev)
+      if (nprev == 0) v // nprevが０だとemaが負になる場合があるので、その際は今のvをemaとする
+      else {
+        val k = 2.0 / (nprev + 1)
+        prev + k * (v - prev)
+      }
     }
   }
 
