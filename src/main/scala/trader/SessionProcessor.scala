@@ -59,17 +59,26 @@ object SessionProcessor {
 */
   }
 
+/**
+  * 2024/7のSBIサイトリニューアルに伴い、シーケンスを変更する
+  * これまでメインサイトにログインしていたが、先物サイトに変更する
+  */
   def login() = {
     genDriver()
     StockLogger.writeMessage("attempt to login")
-    driver.get("https://www.sbisec.co.jp/")
+    // driver.get("https://www.sbisec.co.jp/")
+    // driver.findElement(By.name("user_id")).sendKeys(Settings.id)
+    // driver.findElement(By.name("user_password")).sendKeys(Settings.pwd)
+    // driver.findElement(By.name("ACT_login")).click()
+    
+    // ETGateまでだと、メインサイトにリダイレクトされる
+    driver.get("https://site2.sbisec.co.jp/ETGate/?OutSide=on&_ControlID=WPLETsmR001Control&_DataStoreID=DSWPLETsmR001Control&sw_page=Future&cat1=home&cat2=none&getFlg=on")
     driver.findElement(By.name("user_id")).sendKeys(Settings.id)
     driver.findElement(By.name("user_password")).sendKeys(Settings.pwd)
     driver.findElement(By.name("ACT_login")).click()
     println(driver.getTitle)
-    driver.findElement(By.xpath("//*[@id=\"link02M\"]/ul/li[1]/a")).click()
-    //new WebDriverWait(driver, 10).until(
-    //  ExpectedConditions.elementToBeClickable(By.className("portfolio"))).click()
+    // 以下の前バージョンの確認項目の代わりの項目を確認すべき?
+    // driver.findElement(By.xpath("//*[@id=\"link02M\"]/ul/li[1]/a")).click()
     StockLogger.writeMessage("login done")
   }
 

@@ -14,6 +14,8 @@ import org.openqa.selenium.support.ui.{ExpectedConditions, WebDriverWait}
   *
   */
 object SBIFutureHandler {
+  // 2024/7/5サイトリニューアル以降は先物サイトのログイン画面にアクセスする
+  val loginUrl = "https://site2.sbisec.co.jp/ETGate/?OutSide=on&_ControlID=WPLETsmR001Control&_DataStoreID=DSWPLETsmR001Control&sw_page=Future&cat1=home&cat2=none&getFlg=on"
   var driver: WebDriver = _
   var loginTime: LocalDateTime = _
 
@@ -71,7 +73,10 @@ object SBIFutureHandler {
       genDriver()
       StockLogger.writeMessage("attempt to initial login")
       // ログイン画面にアクセス
-      driver.get("https://www.sbisec.co.jp/ETGate/?OutSide=on&_ControlID=WPLETsmR001Control&_DataStoreID=DSWPLETsmR001Control&sw_page=Future&cat1=home&cat2=none&getFlg=on")
+      // driver.get("https://www.sbisec.co.jp/ETGate/?OutSide=on&_ControlID=WPLETsmR001Control&_DataStoreID=DSWPLETsmR001Control&sw_page=Future&cat1=home&cat2=none&getFlg=on")
+
+      // 2024/7/5サイトリニューアル以降は先物サイトのログイン画面に直接アクセスする。input要素は変化なし
+      driver.get(loginUrl)
       // ID入力
       driver.findElement(By.name("user_id")).sendKeys(Settings.id)
       // パスワード入力
@@ -100,7 +105,7 @@ object SBIFutureHandler {
       val wait = new WebDriverWait(driver, Duration.ofSeconds(60))
       StockLogger.writeMessage("attempt to login")
       // ログイン画面にアクセス
-      driver.get("https://www.sbisec.co.jp/ETGate/?OutSide=on&_ControlID=WPLETsmR001Control&_DataStoreID=DSWPLETsmR001Control&sw_page=Future&cat1=home&cat2=none&getFlg=on")
+      driver.get(loginUrl)
       status = MAIN
     }
 
@@ -186,7 +191,7 @@ object SBIFutureHandler {
     // val firstRow = wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//*[@id='datagrid-row-r7-2-0']")))
     val firstRow = wait.until(ExpectedConditions.visibilityOfElementLocated(
     By.xpath("""/html/body/app-root/div/nz-spin/div/oms-main/section/div[3]/as-split/as-split-area[1]/div/div/oms-price-board""")))
-  }
+}
 
   /**
     * 重要なお知らせ画面が表示されていたら、すべての項目に同意する
@@ -195,10 +200,21 @@ object SBIFutureHandler {
   def clearAcknowledge(): Unit = {
     val wait = timer(60)
     try {
-      // "重要なお知らせ"のpath。2022/6/11 従前から変わっていないことを確認した。
-      val noticemsg = wait.until(ExpectedConditions.visibilityOfElementLocated(
-        By.xpath("/html/body/div[1]/table/tbody/tr/td[1]/table/tbody/tr[2]/td[2]/table/tbody/tr[3]/td/div/b")))
-      StockLogger.writeMessage("重要なお知らせ: " + noticemsg.getText)
+      // 2024/7/8
+      // サイトリニューアルに伴い、重要なお知らせ画面の確認方法を変更する
+      // pathを確認するため、暫定的に"重要なお知らせ"という文言が表示されたら終了し、
+      // 手動でお知らせページを確認する
+      val noticeTitle = wait.until(ExpectedConditions.visibilityOfElementLocated(
+        By.xpath("/html/body/div[2]/table/tbody/tr/td[1]/table/tbody/tr[2]/td[2]/table/tbody/tr[3]/td/div/b")))
+      val msg = if (noticeTitle.getText == "重要なお知らせ") "重要なお知らせです。処理を終了します" else "重要なお知らせ以外のエラーです"
+      StockLogger.writeMessage("重要なお知らせです。処理を終了します")
+      close()
+      System.exit(0)
+
+      // // "重要なお知らせ"のpath。2022/6/11 従前から変わっていないことを確認した。
+      // val noticemsg = wait.until(ExpectedConditions.visibilityOfElementLocated(
+      //   By.xpath("/html/body/div[1]/table/tbody/tr/td[1]/table/tbody/tr[2]/td[2]/table/tbody/tr[3]/td/div/b")))
+      // StockLogger.writeMessage("重要なお知らせ: " + noticemsg.getText)
     } catch {
       case e: Exception =>
         StockLogger.writeMessage("重要なお知らせ画面以外のエラーです")
@@ -296,6 +312,14 @@ object SBIFutureHandler {
         // val amtCell = wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//*[@id='psform']/table/tbody/tr[3]/td[3]/table/tbody/tr[6]/td[2]")))
         // val askPriceCell = wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//*[@id='psform']/table/tbody/tr[3]/td[1]/table/tbody/tr[2]/td[2]/table/tbody/tr[11]/td[2]")))
 
+        // 2024/7/5のサイトリニューアル以前のパス
+        // val priceCell = wait.until(ExpectedConditions.visibilityOfElementLocated(
+        // By.xpath("/html/body/app-root/div/nz-spin/div/oms-main/section/div[3]/as-split/as-split-area[1]/div/div/oms-price-board/div/section/div/div/div[2]/ul/li/div[2]/div/div[1]/div")))
+        // val amtCell = wait.until(ExpectedConditions.visibilityOfElementLocated(
+        // By.xpath("/html/body/app-root/div/nz-spin/div/oms-main/section/div[3]/as-split/as-split-area[1]/div/div/oms-price-board/div/section/div/div/div[2]/ul/li/div[3]/div/div[2]/div")))
+        // val askPriceCell = wait.until(ExpectedConditions.visibilityOfElementLocated(
+        // By.xpath("/html/body/app-root/div/nz-spin/div/oms-main/section/div[3]/as-split/as-split-area[1]/div/div/oms-price-board/div/section/div/div/div[2]/ul/li/div[9]/ul/li[1]/span[3]")))
+        // 2024/7/5以降もパスは変化なし
         val priceCell = wait.until(ExpectedConditions.visibilityOfElementLocated(
         By.xpath("/html/body/app-root/div/nz-spin/div/oms-main/section/div[3]/as-split/as-split-area[1]/div/div/oms-price-board/div/section/div/div/div[2]/ul/li/div[2]/div/div[1]/div")))
         val amtCell = wait.until(ExpectedConditions.visibilityOfElementLocated(
