@@ -202,14 +202,9 @@ object SBIFutureHandler {
     try {
       // 2024/7/8
       // サイトリニューアルに伴い、重要なお知らせ画面の確認方法を変更する
-      // pathを確認するため、暫定的に"重要なお知らせ"という文言が表示されたら終了し、
-      // 手動でお知らせページを確認する
       val noticeTitle = wait.until(ExpectedConditions.visibilityOfElementLocated(
         By.xpath("/html/body/div[2]/table/tbody/tr/td[1]/table/tbody/tr[2]/td[2]/table/tbody/tr[3]/td/div/b")))
-      val msg = if (noticeTitle.getText == "重要なお知らせ") "重要なお知らせです。処理を終了します" else "重要なお知らせ以外のエラーです"
-      StockLogger.writeMessage("重要なお知らせです。処理を終了します")
-      close()
-      System.exit(0)
+      StockLogger.writeMessage(noticeTitle.getText()) // 正常なら「重要なお知らせ」となる
 
       // // "重要なお知らせ"のpath。2022/6/11 従前から変わっていないことを確認した。
       // val noticemsg = wait.until(ExpectedConditions.visibilityOfElementLocated(
@@ -224,31 +219,43 @@ object SBIFutureHandler {
     try {
       // 最新メッセージの表示
       // 最新メッセージへのリンクのpath。2022/6/11 従前から変わっていないことを確認した。
+      // val msglnk = wait.until(ExpectedConditions.visibilityOfElementLocated(
+      //   By.xpath("/html/body/div[1]/table/tbody/tr/td[1]/table/tbody/tr[2]/td[2]/form/table[4]/tbody/tr/td/table/tbody/tr[2]/td[2]/table/tbody/tr[2]/td/a")))
+      // 2024/7/5 サイトリニューアル以降のパス
       val msglnk = wait.until(ExpectedConditions.visibilityOfElementLocated(
-        By.xpath("/html/body/div[1]/table/tbody/tr/td[1]/table/tbody/tr[2]/td[2]/form/table[4]/tbody/tr/td/table/tbody/tr[2]/td[2]/table/tbody/tr[2]/td/a")))
+        By.xpath("/html/body/div[2]/table/tbody/tr/td[1]/table/tbody/tr[2]/td[2]/form/table[4]/tbody/tr/td/table/tbody/tr[2]/td[2]/table/tbody/tr[2]/td/a")))
       StockLogger.writeMessage("重要なお知らせを表示します: " + msglnk.getText)
       msglnk.click()
       // 同意ボタンのpath。2022/6/11 従前から変わっていないことを確認した。
+      // val agreebtn = wait.until(ExpectedConditions.visibilityOfElementLocated(
+      //   By.xpath("/html/body/div[1]/table/tbody/tr/td[1]/table/tbody/tr/td[2]/form/table[4]/tbody/tr/td/input[1]")))
+      // StockLogger.writeMessage("重要なお知らせに同意します")
+      // 2024/7/5 サイトリニューアル以降のパス
       val agreebtn = wait.until(ExpectedConditions.visibilityOfElementLocated(
-        By.xpath("/html/body/div[1]/table/tbody/tr/td[1]/table/tbody/tr/td[2]/form/table[4]/tbody/tr/td/input[1]")))
+        By.xpath("/html/body/div[2]/table/tbody/tr/td[1]/table/tbody/tr/td[2]/form/table[4]/tbody/tr/td/input[1]")))
       StockLogger.writeMessage("重要なお知らせに同意します")
       agreebtn.click()
+      // 2024/7/5 以下の手順はスキップし、ログインシーケンスに戻るようにする
+      
       // 戻るボタンのpath。2022/6/11 従前から変わっていないことを確認した。
-      val backbtn = wait.until(ExpectedConditions.visibilityOfElementLocated(
-        By.xpath("/html/body/div[1]/table/tbody/tr/td[1]/table/tbody/tr/td[2]/form/table[7]/tbody/tr[4]/td/input[1]")))
-      StockLogger.writeMessage("重要なお知らせ一覧に戻ります")
-      backbtn.click()
+      // val backbtn = wait.until(ExpectedConditions.visibilityOfElementLocated(
+      //   By.xpath("/html/body/div[1]/table/tbody/tr/td[1]/table/tbody/tr/td[2]/form/table[7]/tbody/tr[4]/td/input[1]")))
+      // StockLogger.writeMessage("重要なお知らせ一覧に戻ります")
+      // backbtn.click()
     } catch {
       case e: Exception =>
         StockLogger.writeMessage("重要なお知らせを処理できませんでした")
         throw e
     }
       // メッセージ無し表示のpath。2022/6/11 従前から変わっていないことを確認した。
-    val nomsg = wait.until(ExpectedConditions.visibilityOfElementLocated(
-      By.xpath("/html/body/div[1]/table/tbody/tr/td[1]/table/tbody/tr[2]/td[2]/form/table[3]/tbody/tr/td/table/tbody/tr[2]/td/div/b")))
-    StockLogger.writeMessage("重要なお知らせはもうありません: " + nomsg.getText)
+    // val nomsg = wait.until(ExpectedConditions.visibilityOfElementLocated(
+    //   By.xpath("/html/body/div[1]/table/tbody/tr/td[1]/table/tbody/tr[2]/td[2]/form/table[3]/tbody/tr/td/table/tbody/tr[2]/td/div/b")))
+    // StockLogger.writeMessage("重要なお知らせはもうありません: " + nomsg.getText)
+
     // ログイン画面にアクセスする。すでにログイン済みなので、これによってメイン画面が表示される
-    driver.get("https://www.sbisec.co.jp/ETGate/?OutSide=on&_ControlID=WPLETsmR001Control&_DataStoreID=DSWPLETsmR001Control&sw_page=Future&cat1=home&cat2=none&getFlg=on")
+    // driver.get("https://www.sbisec.co.jp/ETGate/?OutSide=on&_ControlID=WPLETsmR001Control&_DataStoreID=DSWPLETsmR001Control&sw_page=Future&cat1=home&cat2=none&getFlg=on")
+    // 2024/7/5以降、先物サイトに直接ログインする
+    driver.get(loginUrl)
   }
 
   /**
