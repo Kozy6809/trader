@@ -17,8 +17,7 @@ object SBIFutureHandler {
   // 2024/7/5サイトリニューアル以降は先物サイトのログイン画面にアクセスする
   val loginUrl = "https://site2.sbisec.co.jp/ETGate/?OutSide=on&_ControlID=WPLETsmR001Control&_DataStoreID=DSWPLETsmR001Control&sw_page=Future&cat1=home&cat2=none&getFlg=on"
   var driver: WebDriver = _
-  var loginTime: LocalDateTime = _
-
+  
   /**
     * ChromeDriverはChromeバージョン75までしか対応していない。
     * Driver4.0.0が正式バージョンになれば使えるかも
@@ -62,6 +61,22 @@ object SBIFutureHandler {
 
   def timer(sec: Long): WebDriverWait = new WebDriverWait(driver, Duration.ofSeconds(sec))
 
+  def logout(): Unit = {
+    val wait = timer(60)
+    wait.pollingEvery(1, TimeUnit.SECONDS)
+    try {
+      StockLogger.writeMessage("attempt to logout")
+      driver.findElement(By.xpath("""//*[@id="header"]/oms-header-board/div/div/oms-nav-header/div/div[1]/a)"""")).click()
+      wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("""/html/body/app-root/div/nz-spin/div/oms-logout/section/div/div[1]/span""")))
+      StockLogger.writeMessage("logout done.")
+    } catch {
+      case e: Exception =>
+        StockLogger.writeMessage(e.getMessage())
+        StockLogger.writeMessage("logout failed")
+        close()
+    }
+  }
+
   def login(): Unit = {
     object  Status extends Enumeration {
       val LOGIN_INITIAL, LOGIN_CONT, MAIN, PRICEBOARD, CONTENTSFRAME, DONE = Value
@@ -92,6 +107,7 @@ object SBIFutureHandler {
           done = true
         } catch {
           case e: Exception =>
+            StockLogger.writeMessage(e.getMessage())
             StockLogger.writeMessage("login failed. retrying click.")
             Thread.sleep(1000)
         }
@@ -115,6 +131,7 @@ object SBIFutureHandler {
       try {
         StockLogger.writeMessage("waiting main view")
         // wait.until(ExpectedConditions.visibilityOfElementLocated(By.name("main")))
+        wait.pollingEvery(2, TimeUnit.SECONDS) // デフォルトは500msecなのでbangされる? それとも関係ない?
         wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("""//*[@id="header"]/oms-header-board/div/div/oms-nav-header""")))
         status = PRICEBOARD
       } catch {
@@ -128,6 +145,7 @@ object SBIFutureHandler {
             status = PRICEBOARD
           } catch {
             case e: Exception =>
+              StockLogger.writeMessage(e.getMessage())
               StockLogger.writeMessage("想定外のエラーです")
               // 建玉が残っていればここで決済したいところだが、その術がない。携帯にアラートを送付するか
               close()
@@ -137,7 +155,6 @@ object SBIFutureHandler {
       }
       println(driver.getTitle)
       StockLogger.writeMessage("login done")
-      loginTime = LocalDateTime.now()
       status = PRICEBOARD
     }
 
@@ -148,6 +165,7 @@ object SBIFutureHandler {
         status = DONE
       } catch {
         case e: Exception =>
+          StockLogger.writeMessage(e.getMessage())
           StockLogger.writeMessage("can't display price board")
           close()
 //          status = LOGIN_CONT
@@ -212,6 +230,7 @@ object SBIFutureHandler {
       // StockLogger.writeMessage("重要なお知らせ: " + noticemsg.getText)
     } catch {
       case e: Exception =>
+        StockLogger.writeMessage(e.getMessage())
         StockLogger.writeMessage("重要なお知らせ画面以外のエラーです")
         throw e
     }
@@ -244,6 +263,7 @@ object SBIFutureHandler {
       // backbtn.click()
     } catch {
       case e: Exception =>
+        StockLogger.writeMessage(e.getMessage())
         StockLogger.writeMessage("重要なお知らせを処理できませんでした")
         throw e
     }

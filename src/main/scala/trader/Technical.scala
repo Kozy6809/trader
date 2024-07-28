@@ -25,6 +25,8 @@ object Technical {
   private val handler = SBIFutureHandler
   val tradeUnit = 1
   private var nightSession = remainSecInDuration(15, 15, 6, 0) > 0
+  var loginTime: LocalDateTime = _
+
 
   /**
     * 指定された時刻が指定された範囲に入っているなら、範囲終端までのミリ秒数を返す。範囲外なら0を返す
@@ -81,11 +83,19 @@ object Technical {
     waitForMarket()
 
     handler.login()
+    loginTime = LocalDateTime.now()
+
 
     var stopRequest = false
     while (!stopRequest) {
       while (stdinr.ready()) stopRequest = userAction(stdinr.read())
-
+        // ログイン後1時間で強制ログアウトされエラー処理に入ってしまうので、その前にログアウト-再ログインする
+        val elapsedTime = loginTime.until(LocalDateTime.now(), ChronoUnit.MINUTES)
+        if (elapsedTime >= 55) {
+          handler.logout()
+          handler.login()
+          loginTime = LocalDateTime.now()
+        }
         trading()
 
       if (!nightSession && remainSecInDuration(15, 10, 16,30) > 0) {
