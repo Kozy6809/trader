@@ -63,7 +63,6 @@ object SBIFutureHandler {
 
   def logout(): Unit = {
     val wait = timer(60)
-    wait.pollingEvery(1, TimeUnit.SECONDS)
     try {
       StockLogger.writeMessage("attempt to logout")
       driver.findElement(By.xpath("""//*[@id="header"]/oms-header-board/div/div/oms-nav-header/div/div[1]/a)"""")).click()
@@ -131,7 +130,6 @@ object SBIFutureHandler {
       try {
         StockLogger.writeMessage("waiting main view")
         // wait.until(ExpectedConditions.visibilityOfElementLocated(By.name("main")))
-        wait.pollingEvery(2, TimeUnit.SECONDS) // デフォルトは500msecなのでbangされる? それとも関係ない?
         wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("""//*[@id="header"]/oms-header-board/div/div/oms-nav-header""")))
         status = PRICEBOARD
       } catch {
