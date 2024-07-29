@@ -74,7 +74,7 @@ object SBIFutureHandler {
         StockLogger.writeMessage("logout failed")
         close()
     }
-h  }
+  }
 
   def login(): Unit = {
     object  Status extends Enumeration {
