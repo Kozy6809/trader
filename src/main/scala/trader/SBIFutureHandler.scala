@@ -65,7 +65,7 @@ object SBIFutureHandler {
     val wait = timer(60)
     try {
       StockLogger.writeMessage("attempt to logout")
-      driver.findElement(By.xpath("""//*[@id="header"]/oms-header-board/div/div/oms-nav-header/div/div[1]/a)""")).click()
+      driver.findElement(By.xpath("/html/body/app-root/div/nz-spin/div/oms-main/section/div[1]/oms-header-board/div/div/oms-nav-header/div/div[1]/a")).click()
       wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("""/html/body/app-root/div/nz-spin/div/oms-logout/section/div/div[1]/span""")))
       StockLogger.writeMessage("logout done.")
     } catch {
