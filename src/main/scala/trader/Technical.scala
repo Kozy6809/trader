@@ -94,6 +94,7 @@ object Technical {
         val elapsedTime = loginTime.until(LocalDateTime.now(), ChronoUnit.MINUTES)
         if (elapsedTime >= 55) {
           handler.logout()
+          handler.close() // ログイン時に新たなドライバを起動するのでその前にクローズする。さもないと6個目のドライバ起動でクラッシュする
           handler.login()
           loginTime = LocalDateTime.now()
         }
