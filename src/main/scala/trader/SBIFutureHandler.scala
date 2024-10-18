@@ -135,6 +135,9 @@ object SBIFutureHandler {
       } catch {
         case e: Exception =>
           StockLogger.writeMessage(e.getMessage)
+          StockLogger.writeMessage("メイン画面が表示されません。現在のHTMLソースを記録します")
+          val currentHTML = driver.getPageSource()
+          StockLogger.writeMessage(currentHTML)
           StockLogger.writeMessage("メイン画面が表示されません。重要なお知らせをチェックします")
           try {
             clearAcknowledge()
