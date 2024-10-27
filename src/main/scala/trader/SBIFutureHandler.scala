@@ -138,20 +138,28 @@ object SBIFutureHandler {
           StockLogger.writeMessage("メイン画面が表示されません。現在のHTMLソースを記録します")
           val currentHTML = driver.getPageSource()
           StockLogger.writeMessage(currentHTML)
-          StockLogger.writeMessage("メイン画面が表示されません。重要なお知らせをチェックします")
-          try {
-            clearAcknowledge()
-            // wait.until(ExpectedConditions.visibilityOfElementLocated(By.name("main")))
-            wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("""//*[@id="header"]/oms-header-board/div/div/oms-nav-header""")))
-            status = PRICEBOARD
-          } catch {
-            case e: Exception =>
-              StockLogger.writeMessage(e.getMessage())
-              StockLogger.writeMessage("想定外のエラーです")
-              // 建玉が残っていればここで決済したいところだが、その術がない。携帯にアラートを送付するか
-              close()
-              TechAnal.save()
-              System.exit(1)
+
+          // ログインボタンを探す
+          val loginList = driver.findElements(By.name("ACT_login"))
+          if (loginList.size() > 0) {
+            StockLogger.writeMessage("まだログイン画面です。ログインをやり直します。")
+            status = LOGIN_INITIAL
+          } else {
+            StockLogger.writeMessage("メイン画面が表示されません。重要なお知らせをチェックします")
+            try {
+              clearAcknowledge()
+              // wait.until(ExpectedConditions.visibilityOfElementLocated(By.name("main")))
+              wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("""//*[@id="header"]/oms-header-board/div/div/oms-nav-header""")))
+              status = PRICEBOARD
+            } catch {
+              case e: Exception =>
+                StockLogger.writeMessage(e.getMessage())
+                StockLogger.writeMessage("想定外のエラーです")
+                // 建玉が残っていればここで決済したいところだが、その術がない。携帯にアラートを送付するか
+                close()
+                TechAnal.save()
+                System.exit(1)
+            }
           }
       }
       println(driver.getTitle)
