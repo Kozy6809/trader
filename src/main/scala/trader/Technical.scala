@@ -25,7 +25,7 @@ import java.time.LocalDateTime
 object Technical {
   private val handler = SBIFutureHandler
   val tradeUnit = 1
-  private var nightSession = remainSecInDuration(15, 15, 6, 0) > 0
+  private var nightSession = remainSecInDuration(15, 45, 6, 0) > 0
   var loginTime: LocalDateTime = _
 
 
@@ -54,12 +54,12 @@ object Technical {
 
   def isClosing(t: LocalTime = LocalTime.now): Boolean = {
     (t.compareTo(LocalTime.of(5, 40)) > 0 && t.compareTo(LocalTime.of(6, 1)) < 0) ||
-      (t.compareTo(LocalTime.of(14, 55)) > 0 && t.compareTo(LocalTime.of(15, 11)) < 0)
+      (t.compareTo(LocalTime.of(15, 25)) > 0 && t.compareTo(LocalTime.of(15, 46)) < 0)
   }
 
   def isClosetime(t: LocalTime = LocalTime.now): Boolean = {
     if (nightSession) t.compareTo(LocalTime.of(5, 50)) > 0
-    else t.compareTo(LocalTime.of(15, 5)) > 0
+    else t.compareTo(LocalTime.of(15, 35)) > 0
   }
 
   def main(args: Array[String]): Unit = {
@@ -77,8 +77,8 @@ object Technical {
     def waitForMarket(): Unit = {
       // 時刻が5:55から8:45の間は8:45までスリープ
       Thread.sleep(remainSecInDuration(5, 55, 8, 45))
-      // 時刻が15:10から16:30の間は16:30までスリープ
-      Thread.sleep(remainSecInDuration(15, 10, 16, 30))
+      // 時刻が15:40から17:00の間は17:00までスリープ
+      Thread.sleep(remainSecInDuration(15, 40, 17, 0))
       Thread.sleep(15000L)
     }
     waitForMarket()
@@ -100,7 +100,7 @@ object Technical {
         }
         trading()
 
-      if (!nightSession && remainSecInDuration(15, 10, 16,30) > 0) {
+      if (!nightSession && remainSecInDuration(15, 40, 17, 0) > 0) {
         TechAnal.save()
         handler.close()
         TechAnal.reset()
