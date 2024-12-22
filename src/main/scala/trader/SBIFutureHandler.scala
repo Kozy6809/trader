@@ -111,7 +111,8 @@ object SBIFutureHandler {
             Thread.sleep(1000)
         }
       }
-      StockLogger.writeMessage("login done. wait for main view")
+      StockLogger.write
+      Message("login done. wait for main view")
       status = MAIN
     }
 
@@ -130,7 +131,7 @@ object SBIFutureHandler {
       try {
         StockLogger.writeMessage("waiting main view")
         // wait.until(ExpectedConditions.visibilityOfElementLocated(By.name("main")))
-        wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("""//*[@id="header"]/oms-header-board/div/div/oms-nav-header""")))
+        wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("""/html/body/app-root/div/nz-spin/div/oms-main/section/div[4]/as-split/as-split-area[1]/div/div/oms-price-board/div/section/div/div/div[1]/ul/li[1]""")))
         status = PRICEBOARD
       } catch {
         case e: Exception =>
