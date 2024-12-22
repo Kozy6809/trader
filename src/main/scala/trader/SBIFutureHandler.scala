@@ -111,8 +111,7 @@ object SBIFutureHandler {
             Thread.sleep(1000)
         }
       }
-      StockLogger.write
-      Message("login done. wait for main view")
+      StockLogger.writeMessage("login done. wait for main view")
       status = MAIN
     }
 
