@@ -217,7 +217,8 @@ object SBIFutureHandler {
     // val priceFrame = wait.until(ExpectedConditions.frameToBeAvailableAndSwitchToIt("price"))
     // val firstRow = wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//*[@id='datagrid-row-r7-2-0']")))
     val firstRow = wait.until(ExpectedConditions.visibilityOfElementLocated(
-    By.xpath("""/html/body/app-root/div/nz-spin/div/oms-main/section/div[3]/as-split/as-split-area[1]/div/div/oms-price-board""")))
+    By.xpath("""/html/body/app-root/div/nz-spin/div/oms-main/section/div[4]/as-split/as-split-area[1]/div/div/oms-price-board/div/section/div/div/div[1]/ul/li[1]
+""")))
 }
 
   /**
