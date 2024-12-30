@@ -9,7 +9,7 @@ import org.openqa.selenium.firefox._
 import org.openqa.selenium.interactions.Actions
 import org.openqa.selenium.support.ui.{ExpectedConditions, WebDriverWait}
 import java.io.File
-
+import com.titusfortner.logging._
 /**
   * SBI証券の先物サイトからデータをやりとりする
   *
@@ -18,6 +18,8 @@ object SBIFutureHandler {
   // 2024/7/5サイトリニューアル以降は先物サイトのログイン画面にアクセスする
   val loginUrl = "https://site2.sbisec.co.jp/ETGate/?OutSide=on&_ControlID=WPLETsmR001Control&_DataStoreID=DSWPLETsmR001Control&sw_page=Future&cat1=home&cat2=none&getFlg=on"
   var driver: WebDriver = _
+  SeleniumLogger.enable()
+  new GeckoDriverLogger().setLevel(FirefoxDriverLogLevel.DEBUG)
   
   /**
     * ChromeDriverはChromeバージョン75までしか対応していない。
