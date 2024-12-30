@@ -8,6 +8,7 @@ import org.openqa.selenium.{By, Dimension, WebDriver}
 import org.openqa.selenium.firefox._
 import org.openqa.selenium.interactions.Actions
 import org.openqa.selenium.support.ui.{ExpectedConditions, WebDriverWait}
+import java.io.File
 
 /**
   * SBI証券の先物サイトからデータをやりとりする
@@ -29,27 +30,12 @@ object SBIFutureHandler {
     * 時々余計な広告ポップアップが出るので、消えるまで待つ必要もある
     */
   def genDriver(): Unit = {
-    //val options = new ChromeOptions()
-    //options.addArguments("--headless")
-    //driver = new ChromeDriver(options)
-
-
-    val firefoxBinary = new FirefoxBinary
-    firefoxBinary.addCommandLineOptions("--headless")
-    System.setProperty("webdriver.gecko.driver", Settings.driverLocation)
-    val firefoxOptions = new FirefoxOptions
-    firefoxOptions.setBinary(firefoxBinary)
-    var done = false
-    while (!done) {
-      try {
-        driver = new FirefoxDriver(firefoxOptions)
-        done = true
-      } catch {
-        case e: Exception =>
-          StockLogger.writeMessage(s"SBIFutureHander::genDriver ${e.getMessage}")
-          Thread.sleep(6000)
-      }
-    }
+    val options: FirefoxOptions = new FirefoxOptions()
+    options.addArguments("-headless")
+    val service: FirefoxDriverService =
+    new GeckoDriverService.Builder().withLogFile(new File("./gecko.log"))
+      .withLogLevel(FirefoxDriverLogLevel.DEBUG).build()
+    driver = new FirefoxDriver(options);
     println(driver)
   }
 
