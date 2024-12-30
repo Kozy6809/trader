@@ -331,27 +331,13 @@ object SBIFutureHandler {
     var errnum = 0
     while (!done) {
       try {
-        // 旧版
-        // val reloadButton = wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("psform:updcmd")))
-        // reloadButton.click()
-        // val priceCell = wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//*[@id='psform']/table/tbody/tr[3]/td[3]/table/tbody/tr[1]/td[2]/b")))
-        // val amtCell = wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//*[@id='psform']/table/tbody/tr[3]/td[3]/table/tbody/tr[6]/td[2]")))
-        // val askPriceCell = wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//*[@id='psform']/table/tbody/tr[3]/td[1]/table/tbody/tr[2]/td[2]/table/tbody/tr[11]/td[2]")))
-
-        // 2024/7/5のサイトリニューアル以前のパス
-        // val priceCell = wait.until(ExpectedConditions.visibilityOfElementLocated(
-        // By.xpath("/html/body/app-root/div/nz-spin/div/oms-main/section/div[3]/as-split/as-split-area[1]/div/div/oms-price-board/div/section/div/div/div[2]/ul/li/div[2]/div/div[1]/div")))
-        // val amtCell = wait.until(ExpectedConditions.visibilityOfElementLocated(
-        // By.xpath("/html/body/app-root/div/nz-spin/div/oms-main/section/div[3]/as-split/as-split-area[1]/div/div/oms-price-board/div/section/div/div/div[2]/ul/li/div[3]/div/div[2]/div")))
-        // val askPriceCell = wait.until(ExpectedConditions.visibilityOfElementLocated(
-        // By.xpath("/html/body/app-root/div/nz-spin/div/oms-main/section/div[3]/as-split/as-split-area[1]/div/div/oms-price-board/div/section/div/div/div[2]/ul/li/div[9]/ul/li[1]/span[3]")))
-        // 2024/7/5以降もパスは変化なし
         val priceCell = wait.until(ExpectedConditions.visibilityOfElementLocated(
-        By.xpath("//*[@id="tableHeight"]/li/div[2]/div/div[1]/div")))
+        By.xpath("//*[@id=\"tableHeight\"]/li/div[2]/div/div[1]/div")))
         val amtCell = wait.until(ExpectedConditions.visibilityOfElementLocated(
-        By.xpath("//*[@id="tableHeight"]/li/div[3]/div/div[2]/div")))
+        By.xpath("//*[@id=\"tableHeight\"]/li/div[3]/div/div[2]/div")))
         val askPriceCell = wait.until(ExpectedConditions.visibilityOfElementLocated(
-        By.xpath("//*[@id="tableHeight"]/li/div[9]/ul/li[1]/span[3]")))
+        By.xpath("//*[@id=\"tableHeight\"]/li/div[9]/ul/li[1]/span[3]")))
+
         price = priceCell.getText.replaceAll(",", "").toDouble
         askPrice = askPriceCell.getText.replaceAll(",", "").toDouble
         amt = if (amtCell.getText == "--") 0 else amtCell.getText.replaceAll(",", "").toInt
