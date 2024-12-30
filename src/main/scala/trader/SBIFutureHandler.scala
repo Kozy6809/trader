@@ -35,6 +35,7 @@ object SBIFutureHandler {
     val service: FirefoxDriverService =
     new GeckoDriverService.Builder().withLogFile(new File("./gecko.log"))
       .withLogLevel(FirefoxDriverLogLevel.DEBUG).build()
+    service.start()
     driver = new FirefoxDriver(options);
     println(driver)
   }
