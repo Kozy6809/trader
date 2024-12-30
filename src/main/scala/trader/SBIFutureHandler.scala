@@ -347,11 +347,11 @@ object SBIFutureHandler {
         // By.xpath("/html/body/app-root/div/nz-spin/div/oms-main/section/div[3]/as-split/as-split-area[1]/div/div/oms-price-board/div/section/div/div/div[2]/ul/li/div[9]/ul/li[1]/span[3]")))
         // 2024/7/5以降もパスは変化なし
         val priceCell = wait.until(ExpectedConditions.visibilityOfElementLocated(
-        By.xpath("/html/body/app-root/div/nz-spin/div/oms-main/section/div[3]/as-split/as-split-area[1]/div/div/oms-price-board/div/section/div/div/div[2]/ul/li/div[2]/div/div[1]/div")))
+        By.xpath("//*[@id="tableHeight"]/li/div[2]/div/div[1]/div")))
         val amtCell = wait.until(ExpectedConditions.visibilityOfElementLocated(
-        By.xpath("/html/body/app-root/div/nz-spin/div/oms-main/section/div[3]/as-split/as-split-area[1]/div/div/oms-price-board/div/section/div/div/div[2]/ul/li/div[3]/div/div[2]/div")))
+        By.xpath("//*[@id="tableHeight"]/li/div[3]/div/div[2]/div")))
         val askPriceCell = wait.until(ExpectedConditions.visibilityOfElementLocated(
-        By.xpath("/html/body/app-root/div/nz-spin/div/oms-main/section/div[3]/as-split/as-split-area[1]/div/div/oms-price-board/div/section/div/div/div[2]/ul/li/div[9]/ul/li[1]/span[3]")))
+        By.xpath("//*[@id="tableHeight"]/li/div[9]/ul/li[1]/span[3]")))
         price = priceCell.getText.replaceAll(",", "").toDouble
         askPrice = askPriceCell.getText.replaceAll(",", "").toDouble
         amt = if (amtCell.getText == "--") 0 else amtCell.getText.replaceAll(",", "").toInt
