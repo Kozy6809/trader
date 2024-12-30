@@ -9,7 +9,7 @@ import org.openqa.selenium.firefox._
 import org.openqa.selenium.interactions.Actions
 import org.openqa.selenium.support.ui.{ExpectedConditions, WebDriverWait}
 import java.io.File
-import com.titusfortner.logging._
+import _root_.com.titusfortner.logging._
 /**
   * SBI証券の先物サイトからデータをやりとりする
   *
@@ -18,8 +18,10 @@ object SBIFutureHandler {
   // 2024/7/5サイトリニューアル以降は先物サイトのログイン画面にアクセスする
   val loginUrl = "https://site2.sbisec.co.jp/ETGate/?OutSide=on&_ControlID=WPLETsmR001Control&_DataStoreID=DSWPLETsmR001Control&sw_page=Future&cat1=home&cat2=none&getFlg=on"
   var driver: WebDriver = _
-  SeleniumLogger.enable()
-  new GeckoDriverLogger().setLevel(FirefoxDriverLogLevel.DEBUG)
+  // ロギングにはhttps://github.com/titusfortner/selenium-loggerを使用している
+  SeleniumLogger seleniumLogger = new SeleniumLogger()
+  seleniumLogger.setLevel(Level.WARNING)
+  new GeckoDriverLogger().setLevel(FirefoxDriverLogLevel.INFO)
   
   /**
     * ChromeDriverはChromeバージョン75までしか対応していない。
@@ -54,7 +56,7 @@ object SBIFutureHandler {
     val wait = timer(60)
     try {
       StockLogger.writeMessage("attempt to logout")
-      driver.findElement(By.xpath("/html/body/app-root/div/nz-spin/div/oms-main/section/div[1]/oms-header-board/div/div/oms-nav-header/div/div[1]/a")).click()
+      driver.findElement(By.xpath("//*[@id=\"header\"]/oms-header-board/div/oms-nav-header/div/div[1]/div[2]/a[1]")).click()
       wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("""/html/body/app-root/div/nz-spin/div/oms-logout/section/div/div[1]/span""")))
       StockLogger.writeMessage("logout done.")
     } catch {
@@ -347,7 +349,7 @@ object SBIFutureHandler {
           errnum += 1
           if (errnum > 3) {
             StockLogger.writeMessage(s"SBIFutureHandler::error exceeds limit times")
-            driver.close()
+            driver.quit()
             System.exit(1)
           }
           StockLogger.writeMessage(s"SBIFutureHandler::acquirePrice error ${errnum} times")
