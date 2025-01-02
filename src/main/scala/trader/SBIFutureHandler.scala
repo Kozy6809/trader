@@ -19,8 +19,8 @@ object SBIFutureHandler {
   val loginUrl = "https://site2.sbisec.co.jp/ETGate/?OutSide=on&_ControlID=WPLETsmR001Control&_DataStoreID=DSWPLETsmR001Control&sw_page=Future&cat1=home&cat2=none&getFlg=on"
   var driver: WebDriver = _
   // ロギングにはhttps://github.com/titusfortner/selenium-loggerを使用している
-  SeleniumLogger seleniumLogger = new SeleniumLogger()
-  seleniumLogger.setLevel(Level.WARNING)
+  // SeleniumLogger seleniumLogger = new SeleniumLogger()
+  // seleniumLogger.setLevel(Level.WARNING)
   new GeckoDriverLogger().setLevel(FirefoxDriverLogLevel.INFO)
   
   /**
