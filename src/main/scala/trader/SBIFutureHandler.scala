@@ -9,7 +9,7 @@ import org.openqa.selenium.firefox._
 import org.openqa.selenium.interactions.Actions
 import org.openqa.selenium.support.ui.{ExpectedConditions, WebDriverWait}
 import java.io.File
-// import _root_.com.titusfortner.logging._
+import _root_.com.titusfortner.logging._
 /**
   * SBI証券の先物サイトからデータをやりとりする
   *
@@ -21,7 +21,7 @@ object SBIFutureHandler {
   // ロギングにはhttps://github.com/titusfortner/selenium-loggerを使用している
   // SeleniumLogger seleniumLogger = new SeleniumLogger()
   // seleniumLogger.setLevel(Level.WARNING)
-  new GeckoDriverLogger().setLevel(FirefoxDriverLogLevel.INFO)
+  // new GeckoDriverLogger().setLevel(FirefoxDriverLogLevel.INFO)
   
   /**
     * ChromeDriverはChromeバージョン75までしか対応していない。
