@@ -9,7 +9,7 @@ import org.openqa.selenium.firefox._
 import org.openqa.selenium.interactions.Actions
 import org.openqa.selenium.support.ui.{ExpectedConditions, WebDriverWait}
 import java.io.File
-import _root_.com.titusfortner.logging._
+// import _root_.com.titusfortner.logging._
 /**
   * SBI証券の先物サイトからデータをやりとりする
   *
@@ -139,8 +139,9 @@ object SBIFutureHandler {
             StockLogger.writeMessage("メイン画面が表示されません。重要なお知らせをチェックします")
             try {
               clearAcknowledge()
-              // wait.until(ExpectedConditions.visibilityOfElementLocated(By.name("main")))
-              wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("""//*[@id="header"]/oms-header-board/div/div/oms-nav-header""")))
+              // clearAcknowledge()のラストでログアウトしないまま再びログイン画面にアクセスする。この時ログイン画面ではなく先物サイトが表示される筈なので
+              // statusをPRICEBOARDに進める。これでうまくいくか検証が必要
+              StockLogger.writeMessage("お知らせを確認しました。ログイン画面にアクセスし、先物サイトが表示されるか確認します。")
               status = PRICEBOARD
             } catch {
               case e: Exception =>
