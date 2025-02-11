@@ -81,7 +81,18 @@ object SBIFutureHandler {
       // driver.get("https://www.sbisec.co.jp/ETGate/?OutSide=on&_ControlID=WPLETsmR001Control&_DataStoreID=DSWPLETsmR001Control&sw_page=Future&cat1=home&cat2=none&getFlg=on")
 
       // 2024/7/5サイトリニューアル以降は先物サイトのログイン画面に直接アクセスする。input要素は変化なし
-      driver.get(loginUrl)
+      var loginDone = false
+      while (!loginDone) {
+        try {
+          driver.get(loginUrl)
+          loginDone = true
+        } catch {
+          case e: Exception =>
+              StockLogger.writeMessage(e.getMessage())
+              StockLogger.writeMessage("can't get login page")
+              driver.quit()
+        }
+      }
       // ID入力
       driver.findElement(By.name("user_id")).sendKeys(Settings.id)
       // パスワード入力
