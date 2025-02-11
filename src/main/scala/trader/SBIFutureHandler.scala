@@ -90,7 +90,7 @@ object SBIFutureHandler {
           case e: Exception =>
               StockLogger.writeMessage(e.getMessage())
               StockLogger.writeMessage("can't get login page")
-              driver.quit()
+              driver.close()
         }
       }
       // ID入力
