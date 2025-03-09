@@ -141,7 +141,7 @@ object Technical {
   }
 
   def userAction(keyCode: Int): Boolean = {
-    var res = stopRequest
+    var res = false
       keyCode match {
       // w = 119 q = 113 a = 97 s = 115 z = 122 x = 120
       case 119 => TechAnal.save()
