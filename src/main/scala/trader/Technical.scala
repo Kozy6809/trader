@@ -63,11 +63,12 @@ object Technical {
   }
 
   def main(args: Array[String]): Unit = {
-    if (args.length > 0) {
-      Settings.replaymode = true
-      if (args(0) == "-f") replayAll(args(1))
-      else replay(args(0))
-      System.exit(0)
+    // -iオプションがあれば直ちにセッション開始するがさもなくば次のセッションから開始する
+    if (!(args.length > 0 && args(0) == "-i")) {
+      val inNight = remainSecInDuration(17, 0, 5, 55)
+      if (inNight > 0) Thread.sleep(inNight)
+      val inDay = remainSecInDuration(8, 45, 15, 40)
+      if (inDay > 0) Thread.sleep(inDay)
     }
 
     SBIFutureHandler.attemptGenDriver()
@@ -79,7 +80,7 @@ object Technical {
       Thread.sleep(remainSecInDuration(5, 55, 8, 45))
       // 時刻が15:40から17:00の間は17:00までスリープ
       Thread.sleep(remainSecInDuration(15, 40, 17, 0))
-      Thread.sleep(15000L)
+      Thread.sleep(3000L)
     }
     waitForMarket()
 
@@ -114,64 +115,64 @@ object Technical {
     TechAnal.save()
     handler.close()
     System.exit(0)
+  }
 
-    def printPrices(p: Price): Unit = {
-      val m = Metrics.metrics.head
-      val amtrate = f"${m.amtrate}%.1f"
-      val m320 = f"${m.m5}%.1f"
-      val m640 = f"${m.m10}%.1f"
-      val m1280 = f"${m.m20}%.1f"
-      val m2560 = f"${m.m40}%.1f"
-      println(List(p.price, p.askPrice, p.amt, amtrate, m320, m640, m1280, m2560).mkString("\t"))
-    }
+  def printPrices(p: Price): Unit = {
+    val m = Metrics.metrics.head
+    val amtrate = f"${m.amtrate}%.1f"
+    val m320 = f"${m.m5}%.1f"
+    val m640 = f"${m.m10}%.1f"
+    val m1280 = f"${m.m20}%.1f"
+    val m2560 = f"${m.m40}%.1f"
+    println(List(p.price, p.askPrice, p.amt, amtrate, m320, m640, m1280, m2560).mkString("\t"))
+  }
 
-    def retryLogin(): Unit = {
-      var done = false
-      while (!done) {
-        try {
-          handler.close()
-          handler.login()
-          done = true
-        } catch {
-          case e: Exception => StockLogger.writeMessage(s"Technical:retryLogin ${e.getMessage}")
-        }
-      }
-    }
-
-    def userAction(keyCode: Int): Boolean = {
-      var res = stopRequest
-       keyCode match {
-        // w = 119 q = 113 a = 97 s = 115 z = 122 x = 120
-        case 119 => TechAnal.save()
-        case 113 => res = true
-        //          case 97 => {handler.orderNewSell(tradeUnit); println("新規売 " + tradeUnit)}
-        //          case 115 => {handler.orderNewBuy(tradeUnit); println("新規買 " + tradeUnit)}
-        //          case 122 => {handler.orderSettleSell(tradeUnit); println("決済売 " + tradeUnit)}
-        //          case 120 => {handler.orderSettleBuy(tradeUnit); println("決済買 " + tradeUnit)}
-        case _ =>
-      }
-      res
-    }
-
-    def trading(): Unit = {
-      val acquireFuture = Future[Price] {
-        handler.acquirePrice()
-      }
+  def retryLogin(): Unit = {
+    var done = false
+    while (!done) {
       try {
-        val p = Await.result(acquireFuture, 10.seconds)
-        if (TechAnal.add(p)) {
-          printPrices(p)
-        }
-        Thread.sleep(1000) // 間隔が短いとbangされる
+        handler.close()
+        handler.login()
+        done = true
       } catch {
-        case e: Exception => {
-          var msg = e.getMessage()
-          if (msg == null) msg = e.toString()
-          else msg = msg.split("\n")(0)
+        case e: Exception => StockLogger.writeMessage(s"Technical:retryLogin ${e.getMessage}")
+      }
+    }
+  }
 
-          StockLogger.writeMessage(s"Technical:trading ${msg}")
-          retryLogin()
-        }
+  def userAction(keyCode: Int): Boolean = {
+    var res = stopRequest
+      keyCode match {
+      // w = 119 q = 113 a = 97 s = 115 z = 122 x = 120
+      case 119 => TechAnal.save()
+      case 113 => res = true
+      //          case 97 => {handler.orderNewSell(tradeUnit); println("新規売 " + tradeUnit)}
+      //          case 115 => {handler.orderNewBuy(tradeUnit); println("新規買 " + tradeUnit)}
+      //          case 122 => {handler.orderSettleSell(tradeUnit); println("決済売 " + tradeUnit)}
+      //          case 120 => {handler.orderSettleBuy(tradeUnit); println("決済買 " + tradeUnit)}
+      case _ =>
+    }
+    res
+  }
+
+  def trading(): Unit = {
+    val acquireFuture = Future[Price] {
+      handler.acquirePrice()
+    }
+    try {
+      val p = Await.result(acquireFuture, 10.seconds)
+      if (TechAnal.add(p)) {
+        printPrices(p)
+      }
+      Thread.sleep(1000) // 間隔が短いとbangされる
+    } catch {
+      case e: Exception => {
+        var msg = e.getMessage()
+        if (msg == null) msg = e.toString()
+        else msg = msg.split("\n")(0)
+
+        StockLogger.writeMessage(s"Technical:trading ${msg}")
+        retryLogin()
       }
     }
   }
