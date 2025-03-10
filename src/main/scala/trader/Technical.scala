@@ -65,25 +65,27 @@ object Technical {
   def main(args: Array[String]): Unit = {
     // -iオプションがあれば直ちにセッション開始するがさもなくば次のセッションから開始する
     if (!(args.length > 0 && args(0) == "-i")) {
-      val inNight = remainSecInDuration(17, 0, 5, 55)
-      if (inNight > 0) Thread.sleep(inNight)
-      val inDay = remainSecInDuration(8, 45, 15, 40)
-      if (inDay > 0) Thread.sleep(inDay)
+      // 時刻が17:00から5:55の間は5:55までスリープ
+      Thread.sleep(remainSecInDuration(17, 0, 5, 55))
+      // 時刻が8:45から15:40の間は15:40までスリープ
+      Thread.sleep(remainSecInDuration(8, 45, 15, 40))
+      Thread.sleep(1L) // to ensure consecutive process goes normally
     }
 
     SBIFutureHandler.attemptGenDriver()
 
     val stdinr = new InputStreamReader(System.in)
     if (Settings.showPrices) PriceWindow.init()
-    def waitForMarket(): Unit = {
+
+    def waitForMarket(preDelay: Long = 3000L): Unit = {
       // 時刻が5:55から8:45の間は8:45までスリープ
       Thread.sleep(remainSecInDuration(5, 55, 8, 45))
       // 時刻が15:40から17:00の間は17:00までスリープ
       Thread.sleep(remainSecInDuration(15, 40, 17, 0))
-      Thread.sleep(3000L)
+      Thread.sleep(preDelay)
     }
-    waitForMarket()
 
+    waitForMarket()
     handler.login()
     loginTime = LocalDateTime.now()
 
@@ -106,6 +108,7 @@ object Technical {
         handler.close()
         TechAnal.reset()
         waitForMarket()
+        Thread.sleep(3000L)
         nightSession = true
         handler.login()
       }
