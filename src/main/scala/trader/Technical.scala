@@ -108,7 +108,6 @@ object Technical {
         handler.close()
         TechAnal.reset()
         waitForMarket()
-        Thread.sleep(3000L)
         nightSession = true
         handler.login()
       }
