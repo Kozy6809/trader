@@ -91,6 +91,8 @@ object SBIFutureHandler {
               StockLogger.writeMessage(e.getMessage())
               StockLogger.writeMessage("can't get login page")
               driver.close()
+              genDriver()
+              StockLogger.writeMessage("new driver acquired")
         }
       }
       // ID入力
