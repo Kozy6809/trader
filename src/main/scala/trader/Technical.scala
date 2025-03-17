@@ -25,7 +25,7 @@ import java.time.LocalDateTime
 object Technical {
   private val handler = SBIFutureHandler
   val tradeUnit = 1
-  private var nightSession = remainSecInDuration(15, 45, 6, 0) > 0
+  private def nightSession = remainSecInDuration(17, 0, 6, 0) > 0
   var loginTime: LocalDateTime = _
 
 
@@ -108,7 +108,6 @@ object Technical {
         handler.close()
         TechAnal.reset()
         waitForMarket()
-        nightSession = true
         handler.login()
       }
 
