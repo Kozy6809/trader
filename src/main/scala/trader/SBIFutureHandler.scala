@@ -236,7 +236,8 @@ object SBIFutureHandler {
       // 2024/7/8
       // サイトリニューアルに伴い、重要なお知らせ画面の確認方法を変更する
       val noticeTitle = wait.until(ExpectedConditions.visibilityOfElementLocated(
-        By.xpath("/html/body/div[2]/table/tbody/tr/td[1]/table/tbody/tr[2]/td[2]/table/tbody/tr[3]/td/div/b")))
+        // 重要なお知らせタイトル
+        By.xpath("/html/body/div[2]/table/tbody/tr/td[1]/div/div/div/h1")))
       StockLogger.writeMessage(noticeTitle.getText()) // 正常なら「重要なお知らせ」となる
 
     } catch {
@@ -249,12 +250,12 @@ object SBIFutureHandler {
     try {
       // 1行目のお知らせのリンク
       val msglnk = wait.until(ExpectedConditions.visibilityOfElementLocated(
-        By.xpath("/html/body/div[2]/table/tbody/tr/td[1]/table/tbody/tr[2]/td[2]/form/table[4]/tbody/tr/td/table/tbody/tr[2]/td[2]/table/tbody/tr[2]/td/a")))
+        By.xpath("/html/body/div[2]/table/tbody/tr/td[1]/div/div/form[2]/ul[1]/li[2]/div[2]/div[2]/a")))
       StockLogger.writeMessage("重要なお知らせを表示します: " + msglnk.getText)
       msglnk.click()
       // 確認ボタン
       val agreebtn = wait.until(ExpectedConditions.visibilityOfElementLocated(
-        By.xpath("/html/body/div[2]/table/tbody/tr/td[1]/table/tbody/tr/td[2]/form/table[4]/tbody/tr/td/input[1]")))
+        By.xpath("/html/body/div[2]/table/tbody/tr/td[1]/form/font/div[1]/button")))
       StockLogger.writeMessage("重要なお知らせに同意します")
       agreebtn.click()
       // 確認ボタン押下後は確認ずみ画面→一覧表示画面に遷移する流れだが、一覧画面からメイン画面に行けないため、
