@@ -255,7 +255,7 @@ object SBIFutureHandler {
       msglnk.click()
       // 確認ボタン
       val agreebtn = wait.until(ExpectedConditions.visibilityOfElementLocated(
-        By.xpath("/html/body/div[2]/table/tbody/tr/td[1]/form/font/div[1]/button")))
+        By.xpath("/html/body/div[2]/table/tbody/tr/td[1]/form/div[4]/button")))
       StockLogger.writeMessage("重要なお知らせに同意します")
       agreebtn.click()
       // 確認ボタン押下後は確認ずみ画面→一覧表示画面に遷移する流れだが、一覧画面からメイン画面に行けないため、
