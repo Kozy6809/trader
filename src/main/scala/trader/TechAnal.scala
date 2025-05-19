@@ -8,6 +8,7 @@ import java.time.{LocalDateTime, LocalTime}
 import java.util.function.Consumer
 
 import scala.collection.mutable.ListBuffer
+import java.time.ZoneId
 
 /**
   * 価格情報を蓄積して分析する
@@ -114,7 +115,7 @@ object TechAnal {
    * 価格が前回の価格から飛び離れている場合、間の価格も今回と同じ時刻に出現したとみなして登録する
    *
     */
-  def registerPrice(price: Double, time: LocalDateTime = LocalDateTime.now()): Long = {
+  def registerPrice(price: Double, time: LocalDateTime = LocalDateTime.now(ZoneId.of("Asia/Tokyo"))): Long = {
     val prev = priceOccurrence.put(price, time)
     if (currentOccurrence > 0 && (price - currentOccurrence).abs > 5.0) {
       val intp = price.toInt
@@ -236,7 +237,7 @@ object TechAnal {
     * 現在時刻文字列をファイル名として使用可能なものに変換する
     */
   def legalTimeStr: String = {
-    val s = LocalDateTime.now.toString.replace(':', '_')
+    val s = LocalDateTime.now(ZoneId.of("Asia/Tokyo")).toString.replace(':', '_')
     s.substring(0, s.length - 4)
   }
 
@@ -251,7 +252,7 @@ object TechAnal {
     })
     writer.close()
 
-    saveSlides("slides" + timeStr)
+    // saveSlides("slides" + timeStr)
   }
 
   def saveSlides(filename: String): Unit = {

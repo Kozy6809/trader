@@ -12,6 +12,7 @@ import scala.concurrent.duration._
 
 import scala.annotation.tailrec
 import java.time.LocalDateTime
+import java.time.ZoneId
 
 /**
   * 値動きを追跡して適切なアクションを実行する
@@ -35,7 +36,7 @@ object Technical {
     * 範囲が0時0分をまたぐ場合の処理も正しく行う
     * 時刻が正確に0時0分の場合必ず範囲外とみなされてしまう
     */
-    def remainSecInDuration(h1: Int, m1: Int, h2: Int, m2: Int, t: LocalTime = LocalTime.now): Long = {
+    def remainSecInDuration(h1: Int, m1: Int, h2: Int, m2: Int, t: LocalTime = LocalTime.now(ZoneId.of("Asia/Tokyo"))): Long = {
       val d0 = LocalTime.of(0, 0)
       val d1 = LocalTime.of(h1, m1)
       val d2 = LocalTime.of(h2, m2)
@@ -52,12 +53,12 @@ object Technical {
     }
 
 
-  def isClosing(t: LocalTime = LocalTime.now): Boolean = {
+  def isClosing(t: LocalTime = LocalTime.now(ZoneId.of("Asia/Tokyo"))): Boolean = {
     (t.compareTo(LocalTime.of(5, 40)) > 0 && t.compareTo(LocalTime.of(6, 1)) < 0) ||
       (t.compareTo(LocalTime.of(15, 25)) > 0 && t.compareTo(LocalTime.of(15, 46)) < 0)
   }
 
-  def isClosetime(t: LocalTime = LocalTime.now): Boolean = {
+  def isClosetime(t: LocalTime = LocalTime.now(ZoneId.of("Asia/Tokyo"))): Boolean = {
     if (nightSession) t.compareTo(LocalTime.of(5, 50)) > 0
     else t.compareTo(LocalTime.of(15, 35)) > 0
   }
@@ -87,19 +88,19 @@ object Technical {
 
     waitForMarket()
     handler.login()
-    loginTime = LocalDateTime.now()
+    loginTime = LocalDateTime.now(ZoneId.of("Asia/Tokyo"))
 
 
     var stopRequest = false
     while (!stopRequest) {
       while (stdinr.ready()) stopRequest = userAction(stdinr.read())
         // ログイン後1時間で強制ログアウトされエラー処理に入ってしまうので、その前にログアウト-再ログインする
-        val elapsedTime = loginTime.until(LocalDateTime.now(), ChronoUnit.MINUTES)
+        val elapsedTime = loginTime.until(LocalDateTime.now(ZoneId.of("Asia/Tokyo")), ChronoUnit.MINUTES)
         if (elapsedTime >= 55) {
           handler.logout()
           handler.close() // ログイン時に新たなドライバを起動するのでその前にクローズする。さもないと6個目のドライバ起動でクラッシュする
           handler.login()
-          loginTime = LocalDateTime.now()
+          loginTime = LocalDateTime.now(ZoneId.of("Asia/Tokyo"))
         }
         trading()
 

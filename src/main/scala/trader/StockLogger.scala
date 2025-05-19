@@ -2,6 +2,7 @@ package trader
 
 import java.io.{File, PrintWriter}
 import java.time.LocalTime
+import java.time.ZoneId
 
 object StockLogger {
   private val replaymode = Settings.replaymode
@@ -15,12 +16,12 @@ object StockLogger {
 
   def writeMessage(msg: String): Unit = {
     if (!replaymode) {
-      writer.println(s"${LocalTime.now()} $msg")
+      writer.println(s"${LocalTime.now(ZoneId.of("Asia/Tokyo"))} $msg")
       writer.flush()
     }
   }
   def bsMessage(msg: String): Unit = {
-    bswriter.println(s"${LocalTime.now()} $msg")
+    bswriter.println(s"${LocalTime.now(ZoneId.of("Asia/Tokyo"))} $msg")
     bswriter.flush()
   }
 

@@ -10,6 +10,7 @@ import org.openqa.selenium.interactions.Actions
 import org.openqa.selenium.support.ui.{ExpectedConditions, WebDriverWait}
 import java.io.File
 import _root_.com.titusfortner.logging._
+import java.time.ZoneId
 /**
   * SBI証券の先物サイトからデータをやりとりする
   *
@@ -354,7 +355,7 @@ object SBIFutureHandler {
     }
     // StockLogger.writeMessage(price +" "+ amt)
 
-    new Price(LocalDateTime.now, price, askPrice, amt)
+    new Price(LocalDateTime.now(ZoneId.of("Asia/Tokyo")), price, askPrice, amt)
   }
 
   def close(): Unit = {
