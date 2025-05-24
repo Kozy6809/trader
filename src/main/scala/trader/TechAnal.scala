@@ -247,7 +247,7 @@ object TechAnal {
     data.zip(Metrics.metrics).foreach(d => {
       val d1 = d._1
       val d2 = d._2
-      writer.println(List(d1.time, d1.price, d1.askPrice, d1.amt,
+      writer.println(List(d1.time.format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS")), d1.price, d1.askPrice, d1.amt,
         f"${d2.amtrate}%.1f", f"${d2.m5}%.1f", f"${d2.m10}%.1f", f"${d2.m20}%.1f", f"${d2.m40}%.1f").mkString("\t"))
     })
     writer.close()
