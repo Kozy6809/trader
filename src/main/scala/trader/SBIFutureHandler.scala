@@ -27,7 +27,7 @@ object SBIFutureHandler {
   val xpath_importantNoticeLink = """/html/body/div[2]/table/tbody/tr/td[1]/div/div/form[2]/ul[1]/li[2]/div[2]/div[2]/a"""
   val xpath_noticeAgreeButton = """/html/body/div[2]/table/tbody/tr/td[1]/form/div[4]/button"""
   // ロボット確認ポップアップ
-  val xpath_confirmTitle = """//*[@id="karte-4367720"]/div[2]/div/div/section/div/header/h1"""
+  val xpath_confirmTitle = """/html/body/div[10]/div/div/div[2]/div/div/section/div/header/h1"""
   val xpath_confirmValue = """//*[@id="randomString"]"""
   val xpath_confirmInput = """//*[@id="userInput"]"""
   val xpath_confirmSubmit = """//*[@id="test"]"""
@@ -222,6 +222,7 @@ object SBIFutureHandler {
         StockLogger.writeMessage("ログイン認証画面です")
         val scanner = new java.util.Scanner(System.in)
         println("認証メールを確認し、認証コードを入力してください")
+        System.out.flush()
         val certifyString = scanner.nextLine()
         val certifyCbox = waitForElement(xpath_certifyCbox)
         certifyCbox.right.get.click() // チェックボックスをクリック
