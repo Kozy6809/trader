@@ -11,13 +11,32 @@ import org.openqa.selenium.support.ui.{ExpectedConditions, WebDriverWait}
 import java.io.File
 import _root_.com.titusfortner.logging._
 import java.time.ZoneId
+import org.openqa.selenium.WebElement
 /**
   * SBI証券の先物サイトからデータをやりとりする
   *
   */
 object SBIFutureHandler {
   // 2024/7/5サイトリニューアル以降は先物サイトのログイン画面にアクセスする
-  val loginUrl = "https://site2.sbisec.co.jp/ETGate/?OutSide=on&_ControlID=WPLETsmR001Control&_DataStoreID=DSWPLETsmR001Control&sw_page=Future&cat1=home&cat2=none&getFlg=on"
+  val xpath_loginUrl = "https://site2.sbisec.co.jp/ETGate/?OutSide=on&_ControlID=WPLETsmR001Control&_DataStoreID=DSWPLETsmR001Control&sw_page=Future&cat1=home&cat2=none&getFlg=on"
+  val xpath_logoutMenu = "//*[@id=\"header\"]/oms-header-board/div/oms-nav-header/div/div[1]/div[2]/a[1]"
+  val xpath_logoutMsg = """/html/body/app-root/div/nz-spin/div/oms-logout/section/div/div[1]/span"""
+  val xpath_meigara_header = """/html/body/app-root/div/nz-spin/div/oms-main/section/div[4]/as-split/as-split-area[1]/div/div/oms-price-board/div/section/div/div/div[1]/ul/li[1]"""
+  // 重要なお知らせ画面
+  val xpath_importantNoticeTitle = """/html/body/div[2]/table/tbody/tr/td[1]/div/div/div/h1"""
+  val xpath_importantNoticeLink = """/html/body/div[2]/table/tbody/tr/td[1]/div/div/form[2]/ul[1]/li[2]/div[2]/div[2]/a"""
+  val xpath_noticeAgreeButton = """/html/body/div[2]/table/tbody/tr/td[1]/form/div[4]/button"""
+  // ロボット確認ポップアップ
+  val xpath_confirmTitle = """//*[@id="karte-4367720"]/div[2]/div/div/section/div/header/h1"""
+  val xpath_confirmValue = """//*[@id="randomString"]"""
+  val xpath_confirmInput = """//*[@id="userInput"]"""
+  val xpath_confirmSubmit = """//*[@id="test"]"""
+  // 認証コード画面
+  val xpath_certifyTitle = """/html/body/div[5]/div[1]/div/div/h3"""
+  val xpath_certifyCbox = """/html/body/div[5]/form/div[1]/div[1]/div[2]/input"""
+  val xpath_certifyInput = """/html/body/div[5]/form/div[1]/div[2]/div/input"""
+  val xpath_certifySubmit = """/html/body/div[5]/form/div[2]/input"""
+
   var driver: WebDriver = _
   // ロギングにはhttps://github.com/titusfortner/selenium-loggerを使用している
   // SeleniumLogger seleniumLogger = new SeleniumLogger()
@@ -53,24 +72,37 @@ object SBIFutureHandler {
 
   def timer(sec: Long): WebDriverWait = new WebDriverWait(driver, Duration.ofSeconds(sec))
 
-  def logout(): Unit = {
-    val wait = timer(60)
+  /**
+    * 指定されたXpathのエレメントが表示されたらEitherで返す。エラーはEither.Leftに格納される
+    */
+  def waitForElement(xpath: String, timeout: Long = 60L): Either[Exception, WebElement] = {
+    val wait = timer(timeout)
     try {
-      StockLogger.writeMessage("attempt to logout")
-      driver.findElement(By.xpath("//*[@id=\"header\"]/oms-header-board/div/oms-nav-header/div/div[1]/div[2]/a[1]")).click()
-      wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("""/html/body/app-root/div/nz-spin/div/oms-logout/section/div/div[1]/span""")))
-      StockLogger.writeMessage("logout done.")
+      val element = wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath(xpath)))
+      Right(element)
     } catch {
       case e: Exception =>
-        StockLogger.writeMessage(e.getMessage())
-        StockLogger.writeMessage("logout failed")
-        close()
+        StockLogger.writeMessage(s"SBIFutureHandler::waitForElement error: ${e.getMessage}")
+        Left(e)
+    }
+  }
+
+  def logout(): Unit = {
+    StockLogger.writeMessage("attempt to logout")
+    val logoutMenu = waitForElement(xpath_logoutMenu)
+    logoutMenu.map(_.click()) 
+    val logoutMsg = waitForElement(xpath_logoutMsg)
+    if (logoutMsg.isLeft) {
+      StockLogger.writeMessage("logout failed")
+      close()
+    } else {
+      StockLogger.writeMessage("logout done.")
     }
   }
 
   def login(): Unit = {
     object  Status extends Enumeration {
-      val LOGIN_INITIAL, LOGIN_CONT, MAIN, PRICEBOARD, CONTENTSFRAME, DONE = Value
+      val LOGIN_INITIAL, LOGIN_CONT, MAIN, PRICEBOARD, CONTENTSFRAME, DONE, CERTIFICATION = Value
     }
     import Status._
     var status = LOGIN_INITIAL
@@ -85,7 +117,7 @@ object SBIFutureHandler {
       var loginDone = false
       while (!loginDone) {
         try {
-          driver.get(loginUrl)
+          driver.get(xpath_loginUrl)
           loginDone = true
         } catch {
           case e: Exception =>
@@ -125,66 +157,92 @@ object SBIFutureHandler {
       val wait = new WebDriverWait(driver, Duration.ofSeconds(60))
       StockLogger.writeMessage("attempt to login")
       // ログイン画面にアクセス
-      driver.get(loginUrl)
+      driver.get(xpath_loginUrl)
       status = MAIN
     }
 
     def doMain(): Unit = {
       println(driver.getTitle)
-      val wait = timer(60)
-      try {
-        StockLogger.writeMessage("waiting main view")
-        // wait.until(ExpectedConditions.visibilityOfElementLocated(By.name("main")))
-        wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("""/html/body/app-root/div/nz-spin/div/oms-main/section/div[4]/as-split/as-split-area[1]/div/div/oms-price-board/div/section/div/div/div[1]/ul/li[1]""")))
-        status = PRICEBOARD
-      } catch {
-        case e: Exception =>
-          StockLogger.writeMessage(e.getMessage)
-          StockLogger.writeMessage("メイン画面が表示されません。現在のHTMLソースを記録します")
-          val currentHTML = driver.getPageSource()
-          StockLogger.writeMessage(currentHTML)
-
-          // ログインボタンを探す
-          val loginList = driver.findElements(By.name("ACT_login"))
-          if (loginList.size() > 0) {
-            StockLogger.writeMessage("まだログイン画面です。ログインをやり直します。")
-            status = LOGIN_INITIAL
-          } else {
-            StockLogger.writeMessage("メイン画面が表示されません。重要なお知らせをチェックします")
-            try {
-              clearAcknowledge()
-              // clearAcknowledge()のラストでログアウトしないまま再びログイン画面にアクセスする。この時ログイン画面ではなく先物サイトが表示される筈なので
-              // statusをPRICEBOARDに進める。これでうまくいくか検証が必要
-              StockLogger.writeMessage("お知らせを確認しました。ログイン画面にアクセスし、先物サイトが表示されるか確認します。")
-              status = PRICEBOARD
-            } catch {
-              case e: Exception =>
-                StockLogger.writeMessage(e.getMessage())
-                StockLogger.writeMessage("想定外のエラーです")
-                // 建玉が残っていればここで決済したいところだが、その術がない。携帯にアラートを送付するか
-                close()
-                TechAnal.save()
-                System.exit(1)
-            }
+      StockLogger.writeMessage("waiting main view")
+      val meigara = waitForElement(xpath_meigara_header)
+      if (meigara.isLeft) {
+        StockLogger.writeMessage("メイン画面が表示されません。現在のHTMLソースを記録します")
+        val currentHTML = driver.getPageSource()
+        StockLogger.writeMessage(currentHTML)
+        // ログインボタンを探す
+        val loginList = driver.findElements(By.name("ACT_login"))
+        if (loginList.size() > 0) {
+          StockLogger.writeMessage("まだログイン画面です。ログインをやり直します。")
+          status = LOGIN_INITIAL
+        } else {
+          StockLogger.writeMessage("メイン画面が表示されません。重要なお知らせをチェックします")
+          val checkResult = clearAcknowledge()
+          if (checkResult.isLeft) {
+            StockLogger.writeMessage("想定外のエラーです")
+            // 建玉が残っていればここで決済したいところだが、その術がない。携帯にアラートを送付するか
+            close()
+            TechAnal.save()
+            System.exit(1)
           }
+          if (checkResult.right.get) {
+            StockLogger.writeMessage("お知らせを確認しました。ログイン画面にアクセスし、先物サイトが表示されるか確認します。")
+            status = PRICEBOARD
+          } else {
+            status = CERTIFICATION
+          }
+        }
+      } else {
+        println(driver.getTitle)
+        StockLogger.writeMessage("login done")
+        status = PRICEBOARD
       }
-      println(driver.getTitle)
-      StockLogger.writeMessage("login done")
-      status = PRICEBOARD
     }
 
+    def doCertify(): Unit = {
+      val certifyTitle = waitForElement(xpath_certifyTitle)
+      if (certifyTitle.isLeft) {
+        StockLogger.writeMessage("ログイン認証画面ではありません。処理を終了します。")
+        println("ログイン認証画面ではありません。処理を終了します。")
+        close()
+        TechAnal.save()
+        System.exit(1)
+      }
+      val confirmTitle = waitForElement(xpath_confirmTitle)
+      if (confirmTitle.isRight) {
+        StockLogger.writeMessage("ロボット確認画面です。処理を続行します")
+        println("ロボット確認画面です。処理を続行します")
+        val confirmValue = waitForElement(xpath_confirmValue)
+        val confirmInput = waitForElement(xpath_confirmInput)
+        confirmInput.right.get.sendKeys(confirmValue.right.get.getText)
+        val confirmSubmit = waitForElement(xpath_confirmSubmit)
+        confirmSubmit.right.get.click()
+        StockLogger.writeMessage("ロボット確認を通過しました")
+        println("ロボット確認を通過しました")
+      }
+        StockLogger.writeMessage("ログイン認証画面です")
+        val scanner = new java.util.Scanner(System.in)
+        println("認証メールを確認し、認証コードを入力してください")
+        val certifyString = scanner.nextLine()
+        val certifyCbox = waitForElement(xpath_certifyCbox)
+        certifyCbox.right.get.click() // チェックボックスをクリック
+        val certifyInput = waitForElement(xpath_certifyInput)
+        certifyInput.right.get.sendKeys(certifyString) // 認証コードを入力
+        val certifySubmit = waitForElement(xpath_certifySubmit)
+        certifySubmit.right.get.click() // 送信ボタンをクリック
+        StockLogger.writeMessage("ログイン認証を通過しました")
+        println("ログイン認証を通過しました")
+        status = PRICEBOARD
+  }
+
     def doPriceBoard(): Unit = {
-      try {
-        priceBoard()
+      val element = priceBoard()
+      if (element.isLeft) {
+        StockLogger.writeMessage("can't display price board")
+        close()
+        status = LOGIN_INITIAL
+      } else {
         StockLogger.writeMessage("price board displayed")
         status = DONE
-      } catch {
-        case e: Exception =>
-          StockLogger.writeMessage(e.getMessage())
-          StockLogger.writeMessage("can't display price board")
-          close()
-//          status = LOGIN_CONT
-          status = LOGIN_INITIAL
       }
     }
 
@@ -210,67 +268,50 @@ object SBIFutureHandler {
         case MAIN => doMain()
         case PRICEBOARD => doPriceBoard()
         case CONTENTSFRAME => doContentsFrame()
+        case CERTIFICATION => doCertify()
       }
     }
   }
 
-  def priceBoard(): Unit = {
-    val wait = timer(60)
 
-    // driver.switchTo().defaultContent()
-    // // !!! TODO 2022/5のAngular移行でエレメントのpathが変わったはず。確認する!!
-    // val mainFrame = wait.until(ExpectedConditions.frameToBeAvailableAndSwitchToIt("main"))
-    // val priceFrame = wait.until(ExpectedConditions.frameToBeAvailableAndSwitchToIt("price"))
-    // val firstRow = wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//*[@id='datagrid-row-r7-2-0']")))
-    val firstRow = wait.until(ExpectedConditions.visibilityOfElementLocated(
-    By.xpath("""/html/body/app-root/div/nz-spin/div/oms-main/section/div[4]/as-split/as-split-area[1]/div/div/oms-price-board/div/section/div/div/div[1]/ul/li[1]
-""")))
-}
+  def priceBoard(): Either[Exception, WebElement] = {
+    val firstRow = waitForElement(xpath_meigara_header)
+    firstRow
+  }
 
   /**
-    * 重要なお知らせ画面が表示されていたら、すべての項目に同意する
-    * 重要なお知らせ画面でなければ例外を投げる
+    * 重要なお知らせ画面が表示されていたら、すべての項目に同意し、trueを返す
+    * 重要なお知らせ画面の取り扱いに失敗したらLeftで例外を返す
+    * 重要なお知らせ画面でなければfalseを返す。この場合はログイン時の認証画面の可能性がある
     */
-  def clearAcknowledge(): Unit = {
-    val wait = timer(60)
-    try {
-      // 2024/7/8
-      // サイトリニューアルに伴い、重要なお知らせ画面の確認方法を変更する
-      val noticeTitle = wait.until(ExpectedConditions.visibilityOfElementLocated(
-        // 重要なお知らせタイトル
-        By.xpath("/html/body/div[2]/table/tbody/tr/td[1]/div/div/div/h1")))
-      StockLogger.writeMessage(noticeTitle.getText()) // 正常なら「重要なお知らせ」となる
-
-    } catch {
-      case e: Exception =>
-        StockLogger.writeMessage(e.getMessage())
-        StockLogger.writeMessage("重要なお知らせ画面以外のエラーです")
-        throw e
-    }
-    // 同時に複数のメッセージがポストされたら以下の処理をリピートしなければならないが、これまでそのようなケースは起きていない
-    try {
-      // 1行目のお知らせのリンク
-      val msglnk = wait.until(ExpectedConditions.visibilityOfElementLocated(
-        By.xpath("/html/body/div[2]/table/tbody/tr/td[1]/div/div/form[2]/ul[1]/li[2]/div[2]/div[2]/a")))
-      StockLogger.writeMessage("重要なお知らせを表示します: " + msglnk.getText)
-      msglnk.click()
-      // 確認ボタン
-      val agreebtn = wait.until(ExpectedConditions.visibilityOfElementLocated(
-        By.xpath("/html/body/div[2]/table/tbody/tr/td[1]/form/div[4]/button")))
-      StockLogger.writeMessage("重要なお知らせに同意します")
-      agreebtn.click()
-      // 確認ボタン押下後は確認ずみ画面→一覧表示画面に遷移する流れだが、一覧画面からメイン画面に行けないため、
-      // ここで再ログインシーケンスに移行する
-    } catch {
-      case e: Exception =>
-        StockLogger.writeMessage(e.getMessage())
+  def clearAcknowledge(): Either[Exception, Boolean] = {
+    val noticeTitle = waitForElement(xpath_importantNoticeTitle)
+    if (noticeTitle.isLeft) {
+      StockLogger.writeMessage("重要なお知らせ画面以外です。ログイン認証画面かもしれません")
+      Right(false)
+    } else {
+      val msgLink = waitForElement(xpath_importantNoticeLink)
+      if (msgLink.isLeft) {
         StockLogger.writeMessage("重要なお知らせを処理できませんでした")
-        throw e
+        Left(msgLink.left.get)
+      } else {
+        StockLogger.writeMessage("重要なお知らせを表示します: " + msgLink.right.get.getText)
+        msgLink.right.get.click()
+        // 確認ボタン
+        val agreeButton = waitForElement(xpath_noticeAgreeButton)
+        if (agreeButton.isLeft) {
+          StockLogger.writeMessage("重要なお知らせを処理できませんでした")
+          Left(msgLink.left.get)
+        } else {
+          StockLogger.writeMessage("重要なお知らせに同意します")
+          agreeButton.right.get.click()
+          // 確認ボタン押下後は確認ずみ画面→一覧表示画面に遷移する流れだが、一覧画面からメイン画面に行けないため、
+          // ここで再ログインシーケンスに移行する
+          driver.get(xpath_loginUrl) // ログイン画面にアクセスする。すでにログイン済みなので、これによってメイン画面が表示される
+          Right(true)
+        }
+      }
     }
-    // ログイン画面にアクセスする。すでにログイン済みなので、これによってメイン画面が表示される
-    // 2024/7/5以降、先物サイトに直接ログインする
-    // TODO 2024/12/14のリニューアルにこれで対応できるか要検証
-    driver.get(loginUrl)
   }
 
   /**
