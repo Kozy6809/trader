@@ -75,7 +75,7 @@ object SBIFutureHandler {
   /**
     * 指定されたXpathのエレメントが表示されたらEitherで返す。エラーはEither.Leftに格納される
     */
-  def waitForElement(xpath: String, timeout: Long = 60L): Either[Exception, WebElement] = {
+  def waitForElement(xpath: String, timeout: Long = 20L): Either[Exception, WebElement] = {
     val wait = timer(timeout)
     try {
       val element = wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath(xpath)))
@@ -199,6 +199,22 @@ object SBIFutureHandler {
     }
 
     def doCertify(): Unit = {
+      println("ロボット確認画面をチェックします")
+      val confirmTitle = waitForElement(xpath_confirmTitle)
+      val confirmValue = waitForElement(xpath_confirmValue)
+      val confirmInput = waitForElement(xpath_confirmInput)
+      if (confirmTitle.isRight) {
+        StockLogger.writeMessage("ロボット確認画面です。処理を続行します")
+        println("ロボット確認画面です。処理を続行します")
+        confirmInput.right.get.sendKeys(confirmValue.right.get.getText)
+        val confirmSubmit = waitForElement(xpath_confirmSubmit)
+        confirmSubmit.right.get.click()
+        StockLogger.writeMessage("ロボット確認を通過しました")
+        println("ロボット確認を通過しました")
+      } else {
+        StockLogger.writeMessage("ロボット確認画面は検出されませんでした")
+        println("ロボット確認画面は検出されませんでした")
+      }
       val certifyTitle = waitForElement(xpath_certifyTitle)
       if (certifyTitle.isLeft) {
         StockLogger.writeMessage("ログイン認証画面ではありません。処理を終了します。")
@@ -207,19 +223,7 @@ object SBIFutureHandler {
         TechAnal.save()
         System.exit(1)
       }
-      val confirmTitle = waitForElement(xpath_confirmTitle)
-      if (confirmTitle.isRight) {
-        StockLogger.writeMessage("ロボット確認画面です。処理を続行します")
-        println("ロボット確認画面です。処理を続行します")
-        val confirmValue = waitForElement(xpath_confirmValue)
-        val confirmInput = waitForElement(xpath_confirmInput)
-        confirmInput.right.get.sendKeys(confirmValue.right.get.getText)
-        val confirmSubmit = waitForElement(xpath_confirmSubmit)
-        confirmSubmit.right.get.click()
-        StockLogger.writeMessage("ロボット確認を通過しました")
-        println("ロボット確認を通過しました")
-      }
-        StockLogger.writeMessage("ログイン認証画面です")
+      StockLogger.writeMessage("ログイン認証画面です")
         val scanner = new java.util.Scanner(System.in)
         println("認証メールを確認し、認証コードを入力してください")
         System.out.flush()
