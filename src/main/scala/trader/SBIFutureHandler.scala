@@ -203,6 +203,8 @@ object SBIFutureHandler {
       val confirmTitle = waitForElement(xpath_confirmTitle)
       val confirmValue = waitForElement(xpath_confirmValue)
       val confirmInput = waitForElement(xpath_confirmInput)
+      if (confirmValue.isRight) println("ロボット確認コードが見つかりました")
+      if (confirmInput.isRight) println("ロボット確認コード入力欄が見つかりました")
       if (confirmTitle.isRight) {
         StockLogger.writeMessage("ロボット確認画面です。処理を続行します")
         println("ロボット確認画面です。処理を続行します")
