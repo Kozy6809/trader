@@ -200,14 +200,10 @@ object SBIFutureHandler {
 
     def doCertify(): Unit = {
       println("ロボット確認画面をチェックします")
-      val confirmTitle = waitForElement(xpath_confirmTitle)
       val confirmValue = waitForElement(xpath_confirmValue)
-      val confirmInput = waitForElement(xpath_confirmInput)
-      if (confirmValue.isRight) println("ロボット確認コードが見つかりました")
-      if (confirmInput.isRight) println("ロボット確認コード入力欄が見つかりました")
-      if (confirmTitle.isRight) {
-        StockLogger.writeMessage("ロボット確認画面です。処理を続行します")
-        println("ロボット確認画面です。処理を続行します")
+      if (confirmValue.isRight) {
+        println("ロボット確認コードが見つかりました")
+        val confirmInput = waitForElement(xpath_confirmInput)
         confirmInput.right.get.sendKeys(confirmValue.right.get.getText)
         val confirmSubmit = waitForElement(xpath_confirmSubmit)
         confirmSubmit.right.get.click()
