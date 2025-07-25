@@ -205,6 +205,7 @@ object SBIFutureHandler {
         println("ロボット確認コードが見つかりました")
         val confirmInput = waitForElement(xpath_confirmInput)
         confirmInput.right.get.sendKeys(confirmValue.right.get.getText)
+        Thread.sleep(3000)
         val confirmSubmit = waitForElement(xpath_confirmSubmit)
         confirmSubmit.right.get.click()
         StockLogger.writeMessage("ロボット確認を通過しました")
@@ -228,8 +229,10 @@ object SBIFutureHandler {
         val certifyString = scanner.nextLine()
         val certifyCbox = waitForElement(xpath_certifyCbox)
         certifyCbox.right.get.click() // チェックボックスをクリック
+        Thread.sleep(3000)
         val certifyInput = waitForElement(xpath_certifyInput)
         certifyInput.right.get.sendKeys(certifyString) // 認証コードを入力
+        Thread.sleep(3000)
         val certifySubmit = waitForElement(xpath_certifySubmit)
         certifySubmit.right.get.click() // 送信ボタンをクリック
         StockLogger.writeMessage("ログイン認証を通過しました")
