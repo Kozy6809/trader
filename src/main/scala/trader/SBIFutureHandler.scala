@@ -110,7 +110,9 @@ object SBIFutureHandler {
     genDriver()
     println("UA文字列をチェックします")
     driver.get("https://www.whatismybrowser.com/detect/what-is-my-user-agent")
-    println(driver.findElement(By.xpath("""//*[@id="detected_value"]""")).getText())
+    val uaString = waitForElement("""//*[@id="detected_value"]""")
+    println(uaString.right.get.getText())
+    close()
 
     def doLogin(): Unit = {
       genDriver()
