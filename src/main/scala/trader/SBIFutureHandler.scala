@@ -107,6 +107,11 @@ object SBIFutureHandler {
     import Status._
     var status = LOGIN_INITIAL
 
+    genDriver()
+    println("UA文字列をチェックします")
+    driver.get("https://www.whatismybrowser.com/detect/what-is-my-user-agent")
+    println(driver.findElement(By.xpath("""//*[@id="detected_value"]""")).getText())
+
     def doLogin(): Unit = {
       genDriver()
       StockLogger.writeMessage("attempt to initial login")
