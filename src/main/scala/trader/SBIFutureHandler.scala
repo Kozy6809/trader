@@ -110,6 +110,7 @@ object SBIFutureHandler {
     genDriver()
     println("UA文字列をチェックします")
     driver.get("https://testpage.jp/tool/ip_user_agent.php")
+    val currentHTML = driver.getPageSource()
     StockLogger.writeMessage(currentHTML)
     println("サイトのページを保存しました")
     close()
