@@ -109,11 +109,9 @@ object SBIFutureHandler {
 
     genDriver()
     println("UA文字列をチェックします")
-    driver.get("https://www.whatismybrowser.com/detect/what-is-my-user-agent")
-    val uaString = waitForElement("""/html/body/div[1]/section[2]/div/div[1]/div[1]/div""")
-    val currentHTML = driver.getPageSource()
+    driver.get("https://testpage.jp/tool/ip_user_agent.php")
     StockLogger.writeMessage(currentHTML)
-    println(uaString.right.get.getText())
+    println("サイトのページを保存しました")
     close()
 
     def doLogin(): Unit = {
