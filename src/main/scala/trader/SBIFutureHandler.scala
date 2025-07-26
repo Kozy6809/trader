@@ -110,7 +110,7 @@ object SBIFutureHandler {
     genDriver()
     println("UA文字列をチェックします")
     driver.get("https://www.whatismybrowser.com/detect/what-is-my-user-agent")
-    val uaString = waitForElement("""//*[@id="detected_value"]""")
+    val uaString = waitForElement("""/html/body/div[1]/section[2]/div/div[1]/div[1]/div""")
     println(uaString.right.get.getText())
     close()
 
